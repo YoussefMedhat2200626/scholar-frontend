@@ -11,21 +11,20 @@ For each candidate job the script:
   3. HTTP errors (429, 5xx, connection failures) are treated as UNKNOWN and leave
      is_active = true to avoid false-positive removals.
 
-Jobs older than max_age_days are auto-expired without an HTTP check (too stale).
-Brand-new jobs (younger than min_age_hours) are skipped — they are unlikely to be
-closed already.
+Jobs older than max_age_days are hard-deleted from storage.
+Jobs in the 7..14 day window are HTTP-checked for closure markers.
 
 Usage:
     python linkedin_expiry_checker.py
     python linkedin_expiry_checker.py --dry-run
-    python linkedin_expiry_checker.py --batch-size 30 --min-age-hours 12 --max-age-days 21
+    python linkedin_expiry_checker.py --batch-size 30 --min-age-days 7 --max-age-days 14
 
 Environment variables (all optional):
     POSTGRES_URL               - connection string (required by db.connect())
     LINKEDIN_EXPIRY_DELAY      - seconds between requests (default: 5)
     LINKEDIN_EXPIRY_BATCH_SIZE - jobs to check per run   (default: 50)
-    LINKEDIN_EXPIRY_MIN_AGE_H  - min age in hours         (default: 6)
-    LINKEDIN_EXPIRY_MAX_AGE_D  - auto-expire after N days (default: 14)
+    LINKEDIN_EXPIRY_MIN_AGE_D  - min age in days          (default: 7)
+    LINKEDIN_EXPIRY_MAX_AGE_D  - auto-delete after N days (default: 14)
 """
 
 
@@ -42,10 +41,10 @@ import requests
 
 from db import (
     connect,
-    get_linkedin_jobs_to_check,
+    get_jobs_due_for_weekly_check,
     mark_job_checked,
     mark_job_inactive,
-    mark_stale_linkedin_jobs_inactive,
+    purge_jobs_older_than_two_weeks,
 )
 
 # --- Logging -----------------------------------------------------------------
@@ -174,7 +173,7 @@ def _clean_html(raw: str) -> str:
 def run_expiry_check(
     *,
     batch_size: int = 50,
-    min_age_hours: int = 6,
+    min_age_days: int = 7,
     max_age_days: int = 14,
     request_delay: float = 5.0,
     dry_run: bool = False,
@@ -182,7 +181,7 @@ def run_expiry_check(
     """Run a full expiry-check cycle and return a summary dict."""
 
     summary: dict[str, int] = {
-        "stale_auto_expired": 0,
+        "purged_old_jobs": 0,
         "checked": 0,
         RESULT_ACTIVE: 0,
         RESULT_EXPIRED: 0,
@@ -190,23 +189,23 @@ def run_expiry_check(
     }
 
     with connect() as conn:
-        # -- Step 1: auto-expire stale jobs (no HTTP needed) ------------------
+        # -- Step 1: hard-delete old jobs (no HTTP needed) --------------------
         if dry_run:
-            log.info("DRY RUN -- skipping stale auto-expiry DB writes")
+            log.info("DRY RUN -- skipping old-job purge DB writes")
         else:
-            stale = mark_stale_linkedin_jobs_inactive(conn, max_age_days=max_age_days)
+            stale = purge_jobs_older_than_two_weeks(conn, max_age_days=max_age_days)
             conn.commit()
-            summary["stale_auto_expired"] = stale
+            summary["purged_old_jobs"] = stale
             if stale:
                 log.info(
-                    "Auto-expired %d stale LinkedIn jobs (>%d days old)", stale, max_age_days
+                    "Auto-deleted %d jobs older than %d days", stale, max_age_days
                 )
 
         # -- Step 2: fetch candidates for HTTP checking -----------------------
-        candidates = get_linkedin_jobs_to_check(
+        candidates = get_jobs_due_for_weekly_check(
             conn,
             limit=batch_size,
-            min_age_hours=min_age_hours,
+            min_age_days=min_age_days,
             max_age_days=max_age_days,
         )
         log.info("Checking %d LinkedIn jobs for availability...", len(candidates))
@@ -268,16 +267,16 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Max jobs to HTTP-check per run (default: 50).",
     )
     p.add_argument(
-        "--min-age-hours",
+        "--min-age-days",
         type=int,
-        default=int(os.getenv("LINKEDIN_EXPIRY_MIN_AGE_H", "6")),
-        help="Skip jobs younger than N hours (default: 6).",
+        default=int(os.getenv("LINKEDIN_EXPIRY_MIN_AGE_D", "7")),
+        help="Check only jobs at least N days old (default: 7).",
     )
     p.add_argument(
         "--max-age-days",
         type=int,
-        default=int(os.getenv("LINKEDIN_EXPIRY_MAX_AGE_D", "30")),
-        help="Auto-expire jobs older than N days (default: 30).",
+        default=int(os.getenv("LINKEDIN_EXPIRY_MAX_AGE_D", "14")),
+        help="Auto-delete jobs older than N days (default: 14).",
     )
     p.add_argument(
         "--delay",
@@ -296,14 +295,14 @@ def main() -> None:
         "LinkedIn Expiry Checker%s", " [DRY RUN]" if args.dry_run else ""
     )
     log.info(
-        "  batch_size=%d  min_age_hours=%d  max_age_days=%d  delay=%.1fs",
-        args.batch_size, args.min_age_hours, args.max_age_days, args.delay,
+        "  batch_size=%d  min_age_days=%d  max_age_days=%d  delay=%.1fs",
+        args.batch_size, args.min_age_days, args.max_age_days, args.delay,
     )
     log.info("=" * 60)
 
     summary = run_expiry_check(
         batch_size=args.batch_size,
-        min_age_hours=args.min_age_hours,
+        min_age_days=args.min_age_days,
         max_age_days=args.max_age_days,
         request_delay=args.delay,
         dry_run=args.dry_run,
@@ -311,8 +310,8 @@ def main() -> None:
 
     log.info("=" * 60)
     log.info(
-        "Done. stale_auto_expired=%d  checked=%d  active=%d  expired=%d  unknown=%d",
-        summary["stale_auto_expired"],
+        "Done. purged_old_jobs=%d  checked=%d  active=%d  expired=%d  unknown=%d",
+        summary["purged_old_jobs"],
         summary["checked"],
         summary[RESULT_ACTIVE],
         summary[RESULT_EXPIRED],

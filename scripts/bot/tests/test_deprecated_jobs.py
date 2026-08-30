@@ -203,6 +203,40 @@ class TestDeprecatedJobs(unittest.TestCase):
         jobs = get_linkedin_jobs_to_check(None, limit=10, min_age_hours=6, max_age_days=14)
         self.assertEqual([job.id for job in jobs], [1])
 
+    def test_get_jobs_due_for_weekly_check_is_linkedin_only(self):
+        now = datetime.now(UTC)
+        window_seen = (now - timedelta(days=9)).isoformat()
+
+        with open(self.test_file, "w", encoding="utf-8") as f:
+            json.dump(
+                [
+                    {
+                        "id": 1,
+                        "source": "linkedin",
+                        "title": "LinkedIn Candidate",
+                        "url": "https://linkedin.com/jobs/view/1",
+                        "content_hash": "li-1",
+                        "first_seen_at": window_seen,
+                        "last_seen_at": window_seen,
+                        "is_taken": False,
+                    },
+                    {
+                        "id": 2,
+                        "source": "wuzzuf",
+                        "title": "Wuzzuf Candidate",
+                        "url": "https://wuzzuf.net/jobs/2",
+                        "content_hash": "wz-2",
+                        "first_seen_at": window_seen,
+                        "last_seen_at": window_seen,
+                        "is_taken": False,
+                    },
+                ],
+                f,
+            )
+
+        jobs = get_jobs_due_for_weekly_check(None, min_age_days=7, max_age_days=14, limit=10)
+        self.assertEqual([job.id for job in jobs], [1])
+
     def test_mark_stale_linkedin_jobs_inactive_and_alias(self):
         now = datetime.now(UTC)
         old_seen = (now - timedelta(days=16)).isoformat()

@@ -425,7 +425,7 @@ def upsert_jobs(conn: connection, jobs: list[Job]) -> tuple[int, int]:
 
 
 def get_jobs_due_for_weekly_check(conn: connection, min_age_days: int = 7, max_age_days: int = 14, limit: int = 15) -> list[StoredJob]:
-    """Get active jobs that were last checked/seen ~7 to 14 days ago for a single weekly HTTP verification."""
+    """Get active LinkedIn jobs that were last checked/seen ~7 to 14 days ago for verification."""
     now = datetime.now(UTC)
     cutoff_min = (now - timedelta(days=min_age_days)).isoformat()
     cutoff_max = (now - timedelta(days=max_age_days)).isoformat()
@@ -441,7 +441,7 @@ def get_jobs_due_for_weekly_check(conn: connection, min_age_days: int = 7, max_a
                 return []
         results = []
         for row in jobs_data:
-            if row.get("is_taken"):
+            if row.get("source") != "linkedin" or row.get("is_taken"):
                 continue
             last_check = row.get("last_checked_at") or row.get("last_seen_at") or row.get("first_seen_at", "")
             if cutoff_max <= last_check <= cutoff_min:
@@ -454,7 +454,8 @@ def get_jobs_due_for_weekly_check(conn: connection, min_age_days: int = 7, max_a
         cur.execute(
             """
             SELECT * FROM jobs
-            WHERE (is_taken = false OR is_taken IS NULL)
+            WHERE source = 'linkedin'
+              AND (is_taken = false OR is_taken IS NULL)
               AND COALESCE(last_checked_at, last_seen_at, first_seen_at) <= (NOW() - INTERVAL '%s days')::text
               AND COALESCE(last_checked_at, last_seen_at, first_seen_at) >= (NOW() - INTERVAL '%s days')::text
             ORDER BY COALESCE(last_checked_at, last_seen_at) ASC

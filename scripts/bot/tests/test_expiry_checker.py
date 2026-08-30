@@ -131,10 +131,10 @@ class TestLinkedInExpiryChecker(unittest.TestCase):
             self.assertEqual(checker._extract_job_id_from_url(url), expected)
 
     @patch("linkedin_expiry_checker.connect")
-    @patch("linkedin_expiry_checker.mark_stale_linkedin_jobs_inactive")
-    @patch("linkedin_expiry_checker.get_linkedin_jobs_to_check")
+    @patch("linkedin_expiry_checker.purge_jobs_older_than_two_weeks")
+    @patch("linkedin_expiry_checker.get_jobs_due_for_weekly_check")
     @patch("linkedin_expiry_checker.check_linkedin_job")
-    def test_run_expiry_check_dry_run(self, mock_check, mock_get_jobs, mock_mark_stale, mock_connect):
+    def test_run_expiry_check_dry_run(self, mock_check, mock_get_jobs, mock_purge, mock_connect):
         mock_conn = MagicMock()
         mock_connect.return_value.__enter__.return_value = mock_conn
 
@@ -166,8 +166,9 @@ class TestLinkedInExpiryChecker(unittest.TestCase):
 
         self.assertEqual(summary["checked"], 1)
         self.assertEqual(summary[checker.RESULT_EXPIRED], 1)
+        self.assertEqual(summary["purged_old_jobs"], 0)
         # In dry run, db updates should be skipped
-        mock_mark_stale.assert_not_called()
+        mock_purge.assert_not_called()
         mock_conn.commit.assert_not_called()
 
 
