@@ -428,7 +428,7 @@ def upsert_jobs(conn: connection, jobs: list[Job]) -> tuple[int, int]:
 
 
 def get_jobs_due_for_weekly_check(conn: connection, min_age_days: int = 7, max_age_days: int = 14, limit: int = 15) -> list[StoredJob]:
-    """Get active jobs that were last seen ~7 to 14 days ago and have NEVER been checked yet."""
+    """Get active LinkedIn jobs that were last seen ~7 to 14 days ago and have NEVER been checked yet."""
     now = datetime.now(UTC)
     cutoff_min = (now - timedelta(days=min_age_days)).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     cutoff_max = (now - timedelta(days=max_age_days)).replace(microsecond=0).isoformat().replace("+00:00", "Z")
@@ -444,6 +444,8 @@ def get_jobs_due_for_weekly_check(conn: connection, min_age_days: int = 7, max_a
                 return []
         results = []
         for row in jobs_data:
+            if row.get("source") != "linkedin":
+                continue
             if row.get("is_taken"):
                 continue
             # Only check jobs that have NEVER been checked before
@@ -460,11 +462,12 @@ def get_jobs_due_for_weekly_check(conn: connection, min_age_days: int = 7, max_a
         cur.execute(
             """
             SELECT * FROM jobs
-            WHERE (is_taken = false OR is_taken IS NULL)
+            WHERE source = 'linkedin'
+              AND (is_taken = false OR is_taken IS NULL)
               AND (last_checked_at IS NULL OR last_checked_at = '')
-              AND COALESCE(last_seen_at, first_seen_at) <= %s
-              AND COALESCE(last_seen_at, first_seen_at) >= %s
-            ORDER BY COALESCE(last_seen_at, first_seen_at) ASC
+              AND COALESCE(NULLIF(last_seen_at, ''), NULLIF(first_seen_at, ''))::timestamptz <= %s::timestamptz
+              AND COALESCE(NULLIF(last_seen_at, ''), NULLIF(first_seen_at, ''))::timestamptz >= %s::timestamptz
+            ORDER BY COALESCE(NULLIF(last_seen_at, ''), NULLIF(first_seen_at, ''))::timestamptz ASC
             LIMIT %s
             """,
             (cutoff_min, cutoff_max, limit)
@@ -498,13 +501,11 @@ def get_linkedin_jobs_to_check(
             if row.get("source") != "linkedin" or row.get("is_taken"):
                 continue
 
-            first_seen = _parse_iso_timestamp(row.get("first_seen_at"))
+            first_seen = _parse_iso_timestamp(row.get("first_seen_at") or row.get("last_seen_at"))
             if first_seen is None or first_seen > min_age_cutoff or first_seen < max_age_cutoff:
                 continue
 
-            last_checked = _parse_iso_timestamp(
-                row.get("last_checked_at") or row.get("last_seen_at") or row.get("first_seen_at")
-            )
+            last_checked = _parse_iso_timestamp(row.get("last_checked_at"))
             if last_checked and last_checked > min_age_cutoff:
                 continue
 
@@ -519,14 +520,16 @@ def get_linkedin_jobs_to_check(
             SELECT * FROM jobs
             WHERE source = 'linkedin'
               AND (is_taken = false OR is_taken IS NULL)
-              AND COALESCE(NULLIF(last_checked_at, ''), last_seen_at, first_seen_at)::timestamptz
+              AND COALESCE(NULLIF(first_seen_at, ''), NULLIF(last_seen_at, ''))::timestamptz
                     <= NOW() - (%s * INTERVAL '1 hour')
-              AND COALESCE(NULLIF(first_seen_at, ''), last_seen_at, last_checked_at)::timestamptz
+              AND COALESCE(NULLIF(first_seen_at, ''), NULLIF(last_seen_at, ''))::timestamptz
                     >= NOW() - (%s * INTERVAL '1 day')
-            ORDER BY COALESCE(NULLIF(last_checked_at, ''), last_seen_at, first_seen_at)::timestamptz ASC
+              AND (last_checked_at IS NULL OR last_checked_at = '' OR NULLIF(last_checked_at, '')::timestamptz <= NOW() - (%s * INTERVAL '1 hour'))
+            ORDER BY NULLIF(last_checked_at, '')::timestamptz ASC NULLS FIRST,
+                     COALESCE(NULLIF(first_seen_at, ''), NULLIF(last_seen_at, ''))::timestamptz ASC
             LIMIT %s
             """,
-            (min_age_hours, max_age_days, limit),
+            (min_age_hours, max_age_days, min_age_hours, limit),
         )
         return [_row_to_stored_job(row) for row in cur.fetchall()]
 
@@ -554,6 +557,7 @@ def mark_job_taken(conn: connection, job_id: int) -> None:
 
     with conn.cursor() as cur:
         cur.execute("UPDATE jobs SET is_taken = true, last_checked_at = %s WHERE id = %s", (ts, job_id))
+    conn.commit()
 
 
 def mark_job_inactive(conn: connection, job_id: int) -> None:
@@ -583,6 +587,7 @@ def mark_job_checked(conn: connection, job_id: int) -> None:
 
     with conn.cursor() as cur:
         cur.execute("UPDATE jobs SET last_checked_at = %s WHERE id = %s", (ts, job_id))
+    conn.commit()
 
 
 def mark_stale_linkedin_jobs_inactive(conn: connection, max_age_days: int = 14) -> int:
@@ -621,18 +626,19 @@ def mark_stale_linkedin_jobs_inactive(conn: connection, max_age_days: int = 14) 
             SET is_taken = true, last_checked_at = %s
             WHERE source = 'linkedin'
               AND (is_taken = false OR is_taken IS NULL)
-              AND COALESCE(NULLIF(last_seen_at, ''), first_seen_at)::timestamptz
+              AND COALESCE(NULLIF(last_seen_at, ''), NULLIF(first_seen_at, ''))::timestamptz
                     <= NOW() - (%s * INTERVAL '1 day')
             """,
             (ts, max_age_days),
         )
-        return cur.rowcount
+        count = cur.rowcount
+    conn.commit()
+    return count
 
 
 def purge_jobs_older_than_two_weeks(conn: connection, max_age_days: int = 14) -> int:
-    """Hard-delete jobs that are 2 weeks old (>= 14 days since last seen) OR were checked >= 7 days ago."""
+    """Hard-delete jobs that are older than max_age_days (>= 14 days since last seen)."""
     now = datetime.now(UTC)
-    cutoff_7d = (now - timedelta(days=7)).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     cutoff_14d = (now - timedelta(days=max_age_days)).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
     if is_json_db_mode():
@@ -647,14 +653,10 @@ def purge_jobs_older_than_two_weeks(conn: connection, max_age_days: int = 14) ->
         original_count = len(jobs_data)
         retained_jobs = []
         for row in jobs_data:
-            last_checked = row.get("last_checked_at")
-            first_seen = row.get("first_seen_at") or ""
+            last_seen = row.get("last_seen_at") or row.get("first_seen_at") or ""
+            is_stale_seen = bool(last_seen and str(last_seen) <= cutoff_14d)
 
-            # Delete if checked >= 7 days ago, OR if first seen >= 14 days ago
-            is_stale_checked = bool(last_checked and str(last_checked).strip() and str(last_checked) <= cutoff_7d)
-            is_stale_seen = bool(first_seen and str(first_seen) <= cutoff_14d)
-
-            if not (is_stale_checked or is_stale_seen):
+            if not is_stale_seen:
                 retained_jobs.append(row)
 
         purged_count = original_count - len(retained_jobs)
@@ -667,12 +669,13 @@ def purge_jobs_older_than_two_weeks(conn: connection, max_age_days: int = 14) ->
         cur.execute(
             """
             DELETE FROM jobs
-            WHERE (last_checked_at IS NOT NULL AND last_checked_at != '' AND last_checked_at <= %s)
-               OR (first_seen_at <= %s)
+            WHERE COALESCE(NULLIF(last_seen_at, ''), NULLIF(first_seen_at, ''))::timestamptz <= %s::timestamptz
             """,
-            (cutoff_7d, cutoff_14d)
+            (cutoff_14d,)
         )
-        return cur.rowcount
+        count = cur.rowcount
+    conn.commit()
+    return count
 
 
 def get_jobs_for_sending(conn: connection, limit: int = 100) -> list[StoredJob]:
@@ -687,7 +690,7 @@ def get_jobs_for_sending(conn: connection, limit: int = 100) -> list[StoredJob]:
                 return []
         matching = [
             _row_to_stored_job(row) for row in jobs_data
-            if row.get("send_status") in ('pending', 'retry', 'partial')
+            if row.get("send_status") in ('pending', 'retry', 'partial') and not row.get("is_taken")
         ]
         return matching[:limit]
 
@@ -696,6 +699,7 @@ def get_jobs_for_sending(conn: connection, limit: int = 100) -> list[StoredJob]:
             """
             SELECT * FROM jobs
             WHERE send_status IN ('pending', 'retry', 'partial')
+              AND (is_taken = false OR is_taken IS NULL)
             ORDER BY first_seen_at ASC, id ASC
             LIMIT %s
             """,
@@ -798,7 +802,7 @@ def estimate_dynamic_limit(conn: connection, days: int = 14, runs_per_day: int =
             """
             SELECT count(*) 
             FROM jobs 
-            WHERE first_seen_at >= %s
+            WHERE NULLIF(first_seen_at, '')::timestamptz >= %s::timestamptz
             """,
             (cutoff,)
         )

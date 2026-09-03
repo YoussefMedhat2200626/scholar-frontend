@@ -28,17 +28,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r scripts/bot/requirements.txt
 
-      - name: Run Job Scraper
+      - name: Run Job Scraper & Lifecycle Updates
         env:
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
           SEED_MODE: "1" # Ensures Telegram sending logic is skipped
         run: |
           cd scripts/bot
           python main.py
-
-      - name: Check LinkedIn Job Availability
-        env:
-          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
-        run: |
-          cd scripts/bot
-          python linkedin_expiry_checker.py

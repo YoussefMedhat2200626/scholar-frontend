@@ -110,9 +110,8 @@ CLOSED_JOB_MARKERS = (
     "this job is no longer accepting applications",
     "job is no longer available",
     "no longer available",
-    "expired",
-    "closed",
-    "no longer accepting",
+    "application deadline has passed",
+    "this job is closed",
 )
 
 

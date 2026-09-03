@@ -218,10 +218,20 @@ def run_weekly_expiry_checks(conn, max_checks: int = 15) -> tuple[int, int]:
 
     log.info(f"🔎 Running 1-week expiry check on {len(due_jobs)} jobs...")
     try:
-        from linkedin_expiry_checker import check_linkedin_job, RESULT_EXPIRED
+        from linkedin_expiry_checker import (
+            check_linkedin_job,
+            RESULT_ACTIVE,
+            RESULT_EXPIRED,
+            _extract_job_id_from_url,
+        )
     except ImportError:
         try:
-            from .linkedin_expiry_checker import check_linkedin_job, RESULT_EXPIRED
+            from .linkedin_expiry_checker import (
+                check_linkedin_job,
+                RESULT_ACTIVE,
+                RESULT_EXPIRED,
+                _extract_job_id_from_url,
+            )
         except ImportError:
             log.warning("Could not import linkedin_expiry_checker -- skipping 1-week HTTP checks.")
             return 0, 0
@@ -229,15 +239,24 @@ def run_weekly_expiry_checks(conn, max_checks: int = 15) -> tuple[int, int]:
     expired_count = 0
     active_count = 0
     for stored in due_jobs:
-        job_identifier = stored.source_job_id or str(stored.id)
+        if stored.source != "linkedin":
+            continue
+        job_identifier = stored.source_job_id or _extract_job_id_from_url(stored.url)
+        if not job_identifier:
+            log.warning(f"  No valid LinkedIn Job ID for job {stored.id} ({stored.title}) -- skipping check.")
+            continue
+
         result = check_linkedin_job(job_identifier)
         if result == RESULT_EXPIRED:
             mark_job_taken(conn, stored.id)
             expired_count += 1
             log.info(f"  ❌ Job {stored.id} ({stored.title}) is expired -> marked is_taken=true")
-        else:
+        elif result == RESULT_ACTIVE:
             mark_job_checked(conn, stored.id)
             active_count += 1
+            log.info(f"  ✓ Job {stored.id} ({stored.title}) verified active.")
+        else:
+            log.warning(f"  ⚠️ Job {stored.id} ({stored.title}) check inconclusive ({result}) -> left untouched for retry.")
 
     log.info(f"  ✓ 1-week expiry check finished: {expired_count} expired, {active_count} verified active.")
     return expired_count, active_count

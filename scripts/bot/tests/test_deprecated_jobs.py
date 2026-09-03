@@ -14,6 +14,10 @@ from db import (
     purge_jobs_older_than_two_weeks,
     get_jobs_due_for_weekly_check,
     mark_job_taken,
+    get_linkedin_jobs_to_check,
+    mark_stale_linkedin_jobs_inactive,
+    mark_job_inactive,
+    get_jobs_for_sending,
 )
 
 class TestDeprecatedJobs(unittest.TestCase):
@@ -87,6 +91,15 @@ class TestDeprecatedJobs(unittest.TestCase):
             self.assertEqual(len(jobs), 1)
             self.assertTrue(jobs[0].get("is_taken"))
 
+    def test_is_closed_card_no_false_positives(self):
+        from sources.linkedin import _is_closed_or_inactive_card
+        self.assertFalse(_is_closed_or_inactive_card("<div>Competitive undisclosed salary offered</div>"))
+        self.assertFalse(_is_closed_or_inactive_card("<div>Modern enclosed workspace provided</div>"))
+        self.assertFalse(_is_closed_or_inactive_card("<div>Unexpired passport required</div>"))
+        self.assertFalse(_is_closed_or_inactive_card("<div>Certifications must not be expired</div>"))
+        self.assertTrue(_is_closed_or_inactive_card("<div>No longer accepting applications</div>"))
+        self.assertTrue(_is_closed_or_inactive_card("<div>This job is closed</div>"))
+
     def test_single_check_guarantee(self):
         now = datetime.now(UTC)
         eight_days_ago = (now - timedelta(days=8)).replace(microsecond=0).isoformat().replace("+00:00", "Z")
@@ -94,6 +107,7 @@ class TestDeprecatedJobs(unittest.TestCase):
         test_data = [
             {
                 "id": 10,
+                "source": "linkedin",
                 "title": "Unchecked 8-day Job",
                 "url": "https://example.com/10",
                 "content_hash": "hash10",
@@ -104,12 +118,24 @@ class TestDeprecatedJobs(unittest.TestCase):
             },
             {
                 "id": 20,
+                "source": "linkedin",
                 "title": "Already Checked 8-day Job",
                 "url": "https://example.com/20",
                 "content_hash": "hash20",
                 "first_seen_at": eight_days_ago,
                 "last_seen_at": eight_days_ago,
                 "last_checked_at": (now - timedelta(days=1)).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+                "is_taken": False,
+            },
+            {
+                "id": 30,
+                "source": "wuzzuf",
+                "title": "Unchecked 8-day Wuzzuf Job",
+                "url": "https://wuzzuf.net/jobs/30",
+                "content_hash": "hash30",
+                "first_seen_at": eight_days_ago,
+                "last_seen_at": eight_days_ago,
+                "last_checked_at": "",
                 "is_taken": False,
             }
         ]
@@ -120,6 +146,121 @@ class TestDeprecatedJobs(unittest.TestCase):
         due_jobs = get_jobs_due_for_weekly_check(None, min_age_days=7, max_age_days=14)
         self.assertEqual(len(due_jobs), 1)
         self.assertEqual(due_jobs[0].id, 10)
+        self.assertEqual(due_jobs[0].source, "linkedin")
+
+    def test_run_weekly_expiry_checks_ignores_non_linkedin_jobs(self):
+        from main import run_weekly_expiry_checks
+        now = datetime.now(UTC)
+        eight_days_ago = (now - timedelta(days=8)).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+        test_data = [
+            {
+                "id": 100,
+                "source": "wuzzuf",
+                "source_job_id": "100",
+                "title": "Wuzzuf Job",
+                "url": "https://wuzzuf.net/jobs/100",
+                "content_hash": "hash100",
+                "first_seen_at": eight_days_ago,
+                "last_seen_at": eight_days_ago,
+                "last_checked_at": "",
+                "is_taken": False,
+            }
+        ]
+
+        with open(self.test_file, "w", encoding="utf-8") as f:
+            json.dump(test_data, f)
+
+        expired, active = run_weekly_expiry_checks(None)
+        self.assertEqual(expired, 0)
+        self.assertEqual(active, 0)
+
+        # Confirm the job was NOT marked taken or expired
+        with open(self.test_file, "r", encoding="utf-8") as f:
+            jobs = json.load(f)
+            self.assertFalse(jobs[0].get("is_taken"))
+            self.assertEqual(jobs[0].get("last_checked_at"), "")
+
+    def test_run_weekly_expiry_checks_uses_url_or_source_job_id_never_db_id(self):
+        from unittest.mock import patch
+        from main import run_weekly_expiry_checks
+        now = datetime.now(UTC)
+        eight_days_ago = (now - timedelta(days=8)).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+        test_data = [
+            {
+                "id": 42,
+                "source": "linkedin",
+                "source_job_id": "",
+                "title": "LinkedIn Job With Blank Source Job ID",
+                "url": "https://www.linkedin.com/jobs/view/9876543210",
+                "content_hash": "hash42",
+                "first_seen_at": eight_days_ago,
+                "last_seen_at": eight_days_ago,
+                "last_checked_at": "",
+                "is_taken": False,
+            },
+            {
+                "id": 99,
+                "source": "linkedin",
+                "source_job_id": "",
+                "title": "LinkedIn Job With Invalid URL",
+                "url": "https://example.com/invalid",
+                "content_hash": "hash99",
+                "first_seen_at": eight_days_ago,
+                "last_seen_at": eight_days_ago,
+                "last_checked_at": "",
+                "is_taken": False,
+            }
+        ]
+
+        with open(self.test_file, "w", encoding="utf-8") as f:
+            json.dump(test_data, f)
+
+        with patch("linkedin_expiry_checker.check_linkedin_job", return_value="active") as mock_check:
+            expired, active = run_weekly_expiry_checks(None)
+
+            # Job 42 should extract "9876543210" from URL (never "42")
+            mock_check.assert_called_once_with("9876543210")
+            self.assertEqual(active, 1)
+            self.assertEqual(expired, 0)
+
+    def test_run_weekly_expiry_checks_unknown_leaves_job_untouched_for_retry(self):
+        from unittest.mock import patch
+        from main import run_weekly_expiry_checks
+        now = datetime.now(UTC)
+        eight_days_ago = (now - timedelta(days=8)).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+        test_data = [
+            {
+                "id": 55,
+                "source": "linkedin",
+                "source_job_id": "5555555555",
+                "title": "LinkedIn Job Failing With Rate Limit or Timeout",
+                "url": "https://www.linkedin.com/jobs/view/5555555555",
+                "content_hash": "hash55",
+                "first_seen_at": eight_days_ago,
+                "last_seen_at": eight_days_ago,
+                "last_checked_at": "",
+                "is_taken": False,
+            }
+        ]
+
+        with open(self.test_file, "w", encoding="utf-8") as f:
+            json.dump(test_data, f)
+
+        with patch("linkedin_expiry_checker.check_linkedin_job", return_value="unknown") as mock_check:
+            expired, active = run_weekly_expiry_checks(None)
+
+            mock_check.assert_called_once_with("5555555555")
+            self.assertEqual(active, 0)
+            self.assertEqual(expired, 0)
+
+        # Confirm job is untouched (is_taken=False, last_checked_at remains empty for retry)
+        with open(self.test_file, "r", encoding="utf-8") as f:
+            jobs = json.load(f)
+            self.assertFalse(jobs[0].get("is_taken"))
+            self.assertEqual(jobs[0].get("last_checked_at"), "")
 
     def test_two_week_and_checked_purge(self):
         now = datetime.now(UTC)
@@ -149,7 +290,7 @@ class TestDeprecatedJobs(unittest.TestCase):
             },
             {
                 "id": 3,
-                "title": "Job checked 8 days ago (reached week 2)",
+                "title": "Job checked 8 days ago (10 days old, younger than 14 days)",
                 "url": "https://example.com/3",
                 "content_hash": "hash3",
                 "first_seen_at": seen_10d_ago,
@@ -163,12 +304,14 @@ class TestDeprecatedJobs(unittest.TestCase):
             json.dump(test_data, f)
 
         purged_count = purge_jobs_older_than_two_weeks(None, max_age_days=14)
-        self.assertEqual(purged_count, 2)
+        self.assertEqual(purged_count, 1)
 
         with open(self.test_file, "r", encoding="utf-8") as f:
             remaining = json.load(f)
-            self.assertEqual(len(remaining), 1)
-            self.assertEqual(remaining[0]["id"], 1)
+            self.assertEqual(len(remaining), 2)
+            remaining_ids = [r["id"] for r in remaining]
+            self.assertIn(1, remaining_ids)
+            self.assertIn(3, remaining_ids)
 
     def test_get_linkedin_jobs_to_check_filters_by_age_and_source(self):
         now = datetime.now(UTC)
@@ -246,6 +389,56 @@ class TestDeprecatedJobs(unittest.TestCase):
         jobs = get_linkedin_jobs_to_check(None, limit=10, min_age_hours=6, max_age_days=14)
         self.assertEqual([job.id for job in jobs], [1])
 
+    def test_get_linkedin_jobs_to_check_reverification_and_throttling(self):
+        now = datetime.now(UTC)
+        seen_10d_ago = (now - timedelta(days=10)).isoformat()
+        checked_24h_ago = (now - timedelta(hours=24)).isoformat()
+        checked_1h_ago = (now - timedelta(hours=1)).isoformat()
+
+        with open(self.test_file, "w", encoding="utf-8") as f:
+            json.dump(
+                [
+                    {
+                        "id": 10,
+                        "source": "linkedin",
+                        "source_job_id": "10",
+                        "title": "Job 10d old checked yesterday",
+                        "company": "Acme",
+                        "location": "Cairo",
+                        "url": "https://linkedin.com/jobs/view/10",
+                        "canonical_url": "https://linkedin.com/jobs/view/10",
+                        "content_hash": "h10",
+                        "send_status": "pending",
+                        "first_seen_at": seen_10d_ago,
+                        "last_seen_at": (now - timedelta(days=2)).isoformat(),
+                        "last_checked_at": checked_24h_ago,
+                        "is_taken": False,
+                    },
+                    {
+                        "id": 20,
+                        "source": "linkedin",
+                        "source_job_id": "20",
+                        "title": "Job 10d old checked 1 hour ago",
+                        "company": "Acme",
+                        "location": "Cairo",
+                        "url": "https://linkedin.com/jobs/view/20",
+                        "canonical_url": "https://linkedin.com/jobs/view/20",
+                        "content_hash": "h20",
+                        "send_status": "pending",
+                        "first_seen_at": seen_10d_ago,
+                        "last_seen_at": (now - timedelta(days=2)).isoformat(),
+                        "last_checked_at": checked_1h_ago,
+                        "is_taken": False,
+                    },
+                ],
+                f,
+            )
+
+        jobs = get_linkedin_jobs_to_check(None, limit=10, min_age_hours=6, max_age_days=14)
+        # Job 10 should be returned (10 days old, checked 24h ago > 6h threshold)
+        # Job 20 should be throttled (checked 1h ago < 6h threshold)
+        self.assertEqual([job.id for job in jobs], [10])
+
     def test_mark_stale_linkedin_jobs_inactive_and_alias(self):
         now = datetime.now(UTC)
         old_seen = (now - timedelta(days=16)).isoformat()
@@ -298,6 +491,53 @@ class TestDeprecatedJobs(unittest.TestCase):
         self.assertTrue(rows[1]["is_taken"])
         self.assertFalse(rows[2]["is_taken"])
         self.assertTrue(rows[3]["is_taken"])
+
+    def test_get_jobs_for_sending_ignores_taken_jobs(self):
+        with open(self.test_file, "w", encoding="utf-8") as f:
+            json.dump(
+                [
+                    {
+                        "id": 101,
+                        "source": "linkedin",
+                        "title": "Pending Active Job",
+                        "url": "https://linkedin.com/jobs/view/101",
+                        "send_status": "pending",
+                        "is_taken": False,
+                    },
+                    {
+                        "id": 102,
+                        "source": "linkedin",
+                        "title": "Pending Taken Job",
+                        "url": "https://linkedin.com/jobs/view/102",
+                        "send_status": "pending",
+                        "is_taken": True,
+                    },
+                    {
+                        "id": 103,
+                        "source": "wuzzuf",
+                        "title": "Retry Active Job",
+                        "url": "https://wuzzuf.net/jobs/103",
+                        "send_status": "retry",
+                        "is_taken": False,
+                    },
+                    {
+                        "id": 104,
+                        "source": "wuzzuf",
+                        "title": "Retry Taken Job",
+                        "url": "https://wuzzuf.net/jobs/104",
+                        "send_status": "retry",
+                        "is_taken": True,
+                    },
+                ],
+                f,
+            )
+
+        jobs_to_send = get_jobs_for_sending(None)
+        sent_ids = [j.id for j in jobs_to_send]
+        self.assertEqual(sent_ids, [101, 103])
+        self.assertNotIn(102, sent_ids)
+        self.assertNotIn(104, sent_ids)
+
 
 if __name__ == "__main__":
     unittest.main()
