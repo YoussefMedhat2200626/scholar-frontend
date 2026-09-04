@@ -135,7 +135,6 @@ function CustomSelect({
 
 export default function JobsClient({ initialJobs, serverError }: { initialJobs: JobData[], serverError?: string }) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCountry, setSelectedCountry] = useState('');
   const [selectedDiscipline, setSelectedDiscipline] = useState('');
   const [selectedCompany, setSelectedCompany] = useState('');
 
@@ -155,8 +154,57 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
       result = result.filter(job => job.company?.toLowerCase() === selectedCompany.toLowerCase());
     }
 
+    if (selectedDiscipline) {
+      const lowerDiscipline = selectedDiscipline.toLowerCase();
+      result = result.filter(job => {
+        let tags: string[] = [];
+        try {
+          tags = typeof job.tags_json === 'string' ? JSON.parse(job.tags_json) : (job.tags_json || []);
+        } catch {}
+        
+        return tags.some(t => t.toLowerCase() === lowerDiscipline);
+      });
+    }
+
     return result;
-  }, [initialJobs, searchQuery, selectedCompany]);
+  }, [initialJobs, searchQuery, selectedCompany, selectedDiscipline]);
+
+  const uniqueDisciplines = useMemo(() => {
+    const dSet = new Set<string>();
+    (initialJobs || []).forEach(job => {
+      let parsedTags: string[] = [];
+      try {
+        parsedTags = typeof job.tags_json === 'string' ? JSON.parse(job.tags_json) : (job.tags_json || []);
+      } catch {}
+      parsedTags.forEach(t => {
+        const lower = t.toLowerCase();
+        // Ignore generic tags to only keep disciplines/majors
+        if (!lower.includes('senior') && !lower.includes('junior') && !lower.includes('mid') &&
+            !lower.includes('remote') && !lower.includes('hybrid') && !lower.includes('on-site') &&
+            !lower.includes('full-time') && !lower.includes('part-time') && !lower.includes('contract') &&
+            !lower.includes('internship') && !lower.includes('temporary') && !lower.includes('volunteer')) {
+          dSet.add(t);
+        }
+      });
+    });
+
+    const targetEngineering = [
+        "engineering", "software", "digital design", "digital verification", 
+        "embedded", "testing", "devops", "cloud", "ai", "machine learning", 
+        "data", "frontend", "backend", "full stack"
+    ];
+
+    return Array.from(dSet).sort((a, b) => {
+      const aName = a.toLowerCase();
+      const bName = b.toLowerCase();
+      const aIsEng = aName.includes('engineer') || targetEngineering.some(t => aName.includes(t));
+      const bIsEng = bName.includes('engineer') || targetEngineering.some(t => bName.includes(t));
+      
+      if (aIsEng && !bIsEng) return -1;
+      if (!aIsEng && bIsEng) return 1;
+      return aName.localeCompare(bName);
+    });
+  }, [initialJobs]);
 
   const uniqueCompanies = useMemo(() => {
     const comps = new Set((initialJobs || []).map(j => j.company).filter(Boolean));
@@ -197,18 +245,6 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
         {/* Filter Bar */}
         <div className="flex flex-col lg:flex-row gap-4 mb-12 bg-[#1a2332]/80 backdrop-blur-md p-2 rounded-2xl border border-white/5 shadow-lg relative z-50">
           
-          {/* Countries Dropdown */}
-          <CustomSelect
-            value={selectedCountry}
-            onChange={setSelectedCountry}
-            placeholder="Select Countries (0)"
-            options={[
-              { label: 'Egypt', value: 'EG' },
-              { label: 'United States', value: 'US' }
-            ]}
-            icon={Globe}
-          />
-
           {/* Search Input */}
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none z-10">
@@ -228,10 +264,8 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
             value={selectedDiscipline}
             onChange={setSelectedDiscipline}
             placeholder="All Disciplines"
-            options={[
-              { label: 'Engineering', value: 'engineering' },
-              { label: 'Software', value: 'software' }
-            ]}
+            options={uniqueDisciplines.map(d => ({ label: d, value: d }))}
+            searchable
           />
 
           {/* Companies Dropdown */}
@@ -264,7 +298,7 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
             
             // Extract some mockup tags for display matching Figma
             const seniority = parsedTags.find((t: string) => t.toLowerCase().includes('senior') || t.toLowerCase().includes('junior') || t.toLowerCase().includes('mid')) || 'Mid-Level';
-            const discipline = parsedTags.filter((t: string) => !t.toLowerCase().includes('senior') && !t.toLowerCase().includes('junior') && !t.toLowerCase().includes('mid')).slice(0, 3).join(', ') || 'Engineering';
+            const discipline = parsedTags.filter((t: string) => !t.toLowerCase().includes('senior') && !t.toLowerCase().includes('junior') && !t.toLowerCase().includes('mid') && !t.toLowerCase().includes('remote') && !t.toLowerCase().includes('hybrid') && !t.toLowerCase().includes('on-site') && !t.toLowerCase().includes('full-time') && !t.toLowerCase().includes('part-time')).slice(0, 3).join(', ') || 'Engineering';
             const locationShort = (job.location?.includes('Egypt') || job.location?.includes('Cairo')) ? 'EG' : 'Remote';
             
             return (
