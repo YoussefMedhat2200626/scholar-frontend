@@ -157,12 +157,15 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
     if (selectedDiscipline) {
       const lowerDiscipline = selectedDiscipline.toLowerCase();
       result = result.filter(job => {
+        const inTitle = job.title?.toLowerCase().includes(lowerDiscipline);
+        
         let tags: string[] = [];
         try {
           tags = typeof job.tags_json === 'string' ? JSON.parse(job.tags_json) : (job.tags_json || []);
         } catch {}
+        const inTags = tags.some(t => t.toLowerCase().includes(lowerDiscipline));
         
-        return tags.some(t => t.toLowerCase() === lowerDiscipline);
+        return inTitle || inTags;
       });
     }
 
@@ -170,7 +173,34 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
   }, [initialJobs, searchQuery, selectedCompany, selectedDiscipline]);
 
   const uniqueDisciplines = useMemo(() => {
-    const dSet = new Set<string>();
+    const dSet = new Set<string>([
+      "Software Engineering",
+      "Digital Design",
+      "Digital Verification",
+      "Embedded Systems",
+      "Physical Design",
+      "Frontend Development",
+      "Backend Development",
+      "Full Stack Development",
+      "Quality Assurance",
+      "Testing",
+      "DevOps",
+      "Cloud",
+      "Data Science",
+      "Machine Learning",
+      "AI",
+      "Hardware Engineering",
+      "Systems Engineering",
+      "Civil Engineering",
+      "Mechanical Engineering",
+      "Electrical Engineering",
+      "Architecture",
+      "IT",
+      "UI/UX Design",
+      "Product Management",
+      "Project Management"
+    ]);
+
     (initialJobs || []).forEach(job => {
       let parsedTags: string[] = [];
       try {
@@ -191,7 +221,7 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
     const targetEngineering = [
         "engineering", "software", "digital design", "digital verification", 
         "embedded", "testing", "devops", "cloud", "ai", "machine learning", 
-        "data", "frontend", "backend", "full stack"
+        "data", "frontend", "backend", "full stack", "quality", "physical design"
     ];
 
     return Array.from(dSet).sort((a, b) => {
