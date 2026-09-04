@@ -427,8 +427,8 @@ def upsert_jobs(conn: connection, jobs: list[Job]) -> tuple[int, int]:
     return inserted, refreshed
 
 
-def get_jobs_due_for_weekly_check(conn: connection, min_age_days: int = 7, max_age_days: int = 14, limit: int = 15) -> list[StoredJob]:
-    """Get active LinkedIn jobs that were last seen ~7 to 14 days ago and have NEVER been checked yet."""
+def get_jobs_due_for_weekly_check(conn: connection, min_age_days: int = 7, max_age_days: int = 30, limit: int = 15) -> list[StoredJob]:
+    """Get active LinkedIn jobs that were last seen ~7 to 30 days ago and have NEVER been checked yet."""
     now = datetime.now(UTC)
     cutoff_min = (now - timedelta(days=min_age_days)).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     cutoff_max = (now - timedelta(days=max_age_days)).replace(microsecond=0).isoformat().replace("+00:00", "Z")
@@ -480,7 +480,7 @@ def get_linkedin_jobs_to_check(
     *,
     limit: int = 50,
     min_age_hours: int = 6,
-    max_age_days: int = 14,
+    max_age_days: int = 30,
 ) -> list[StoredJob]:
     """Return active LinkedIn jobs that are old enough for verification and not too stale."""
     now = datetime.now(UTC)
@@ -590,7 +590,7 @@ def mark_job_checked(conn: connection, job_id: int) -> None:
     conn.commit()
 
 
-def mark_stale_linkedin_jobs_inactive(conn: connection, max_age_days: int = 14) -> int:
+def mark_stale_linkedin_jobs_inactive(conn: connection, max_age_days: int = 30) -> int:
     """Mark stale LinkedIn jobs as inactive instead of deleting them."""
     cutoff = datetime.now(UTC) - timedelta(days=max_age_days)
     ts = now_utc()
@@ -636,10 +636,10 @@ def mark_stale_linkedin_jobs_inactive(conn: connection, max_age_days: int = 14) 
     return count
 
 
-def purge_jobs_older_than_two_weeks(conn: connection, max_age_days: int = 14) -> int:
-    """Hard-delete jobs that are older than max_age_days (>= 14 days since last seen)."""
+def purge_jobs_older_than_two_weeks(conn: connection, max_age_days: int = 30) -> int:
+    """Hard-delete jobs that are older than max_age_days (>= 30 days since last seen)."""
     now = datetime.now(UTC)
-    cutoff_14d = (now - timedelta(days=max_age_days)).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    cutoff_30d = (now - timedelta(days=max_age_days)).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
     if is_json_db_mode():
         filepath = get_json_db_filepath()
@@ -654,7 +654,7 @@ def purge_jobs_older_than_two_weeks(conn: connection, max_age_days: int = 14) ->
         retained_jobs = []
         for row in jobs_data:
             last_seen = row.get("last_seen_at") or row.get("first_seen_at") or ""
-            is_stale_seen = bool(last_seen and str(last_seen) <= cutoff_14d)
+            is_stale_seen = bool(last_seen and str(last_seen) <= cutoff_30d)
 
             if not is_stale_seen:
                 retained_jobs.append(row)
@@ -671,7 +671,7 @@ def purge_jobs_older_than_two_weeks(conn: connection, max_age_days: int = 14) ->
             DELETE FROM jobs
             WHERE COALESCE(NULLIF(last_seen_at, ''), NULLIF(first_seen_at, ''))::timestamptz <= %s::timestamptz
             """,
-            (cutoff_14d,)
+            (cutoff_30d,)
         )
         count = cur.rowcount
     conn.commit()

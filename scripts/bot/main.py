@@ -212,7 +212,7 @@ def mark_pending_as_skipped(conn, limit: int = MAX_JOBS_PER_RUN) -> int:
 
 def run_weekly_expiry_checks(conn, max_checks: int = 15) -> tuple[int, int]:
     """Perform 1-week HTTP check on jobs due for weekly verification."""
-    due_jobs = get_jobs_due_for_weekly_check(conn, min_age_days=7, max_age_days=14, limit=max_checks)
+    due_jobs = get_jobs_due_for_weekly_check(conn, min_age_days=7, max_age_days=30, limit=max_checks)
     if not due_jobs:
         return 0, 0
 
@@ -338,12 +338,12 @@ def run_bot(
             log.warning(f"Weekly expiry check failed (non-critical): {exc}")
             conn.rollback()
 
-        # 2-Week Automatic Hard Removal (>= 14 days old)
+        # 30-Day Automatic Hard Removal (>= 30 days old)
         try:
-            purged = purge_jobs_older_than_two_weeks(conn, max_age_days=14)
+            purged = purge_jobs_older_than_two_weeks(conn, max_age_days=30)
             summary.purged_jobs = purged
             if purged > 0:
-                log.info(f"🗑️ Auto-removed {purged} jobs older than 2 weeks (>= 14 days).")
+                log.info(f"🗑️ Auto-removed {purged} jobs older than 30 days (>= 30 days).")
             conn.commit()
         except Exception as exc:
             log.warning(f"2-week purge failed (non-critical): {exc}")

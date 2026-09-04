@@ -18,7 +18,7 @@ closed already.
 Usage:
     python linkedin_expiry_checker.py
     python linkedin_expiry_checker.py --dry-run
-    python linkedin_expiry_checker.py --batch-size 30 --min-age-hours 12 --max-age-days 14
+    python linkedin_expiry_checker.py --batch-size 30 --min-age-hours 12 --max-age-days 30
 """
 
 from __future__ import annotations
@@ -159,7 +159,7 @@ def run_expiry_check(
     *,
     batch_size: int = 50,
     min_age_hours: int = 6,
-    max_age_days: int = 14,
+    max_age_days: int = 30,
     request_delay: float = 5.0,
     dry_run: bool = False,
     purge_stale: bool = False,
@@ -240,7 +240,7 @@ def main() -> None:
     parser.add_argument("--dry-run", action="store_true", help="Report status without updating DB.")
     parser.add_argument("--batch-size", type=int, default=50, help="Max jobs to check.")
     parser.add_argument("--delay", type=float, default=5.0, help="Delay between requests in seconds.")
-    parser.add_argument("--purge-stale", action="store_true", help="Purge stale jobs older than 14 days.")
+    parser.add_argument("--purge-stale", action="store_true", help="Purge stale jobs older than 30 days.")
     args = parser.parse_args()
 
     run_expiry_check(

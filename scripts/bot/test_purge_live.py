@@ -1,5 +1,5 @@
 import os
-from db import connect, purge_jobs_older_than_two_weeks
+from db import connect, purge_jobs_older_than_30_days
 
 try:
     with connect() as conn:
@@ -18,7 +18,7 @@ try:
             print("Jobs count before purge:", cur.fetchone()[0])
             
         # Run purge
-        purged = purge_jobs_older_than_two_weeks(conn, 14)
+        purged = purge_jobs_older_than_30_days(conn, 30)
         print("Purged count:", purged)
         
         with conn.cursor() as cur:

@@ -28,7 +28,7 @@ const getJsonDbPath = () => path.join(process.cwd(), 'jobs_export.json');
 
 export async function getJobs(): Promise<JobItem[]> {
   const isLocalJsonMode = process.env.USE_LOCAL_JSON_DB === 'true';
-  const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
   if (isLocalJsonMode) {
     try {
@@ -42,7 +42,7 @@ export async function getJobs(): Promise<JobItem[]> {
       const availableJobs = jobs.filter((job) => {
         if (job.is_taken) return false;
         const seenDate = job.last_seen_at || job.first_seen_at;
-        if (seenDate && seenDate < fourteenDaysAgo) return false;
+        if (seenDate && seenDate < thirtyDaysAgo) return false;
         return true;
       });
 
@@ -60,9 +60,9 @@ export async function getJobs(): Promise<JobItem[]> {
   }
 
   const { rows } = await sql`
-    SELECT * FROM jobs 
+    SELECT * FROM jobs
     WHERE (is_taken = false OR is_taken IS NULL)
-      AND COALESCE(NULLIF(last_seen_at, ''), NULLIF(first_seen_at, ''))::timestamptz >= ${fourteenDaysAgo}::timestamptz
+      AND COALESCE(NULLIF(last_seen_at, ''), NULLIF(first_seen_at, ''))::timestamptz >= ${thirtyDaysAgo}::timestamptz
     ORDER BY first_seen_at DESC
   `;
   return rows as JobItem[];
