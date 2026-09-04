@@ -86,27 +86,29 @@ function CustomSelect({
       )}
       <div 
         className={`w-full bg-[#111827]/50 border border-white/5 text-neutral-300 text-sm rounded-xl py-3.5 ${Icon ? 'pl-11' : 'pl-5'} pr-10 cursor-pointer flex items-center justify-between transition-all hover:bg-white/10 select-none`}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => { if (!isOpen) setIsOpen(true); }}
       >
-        <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
-        <ChevronDown className={`absolute right-4 h-4 w-4 text-neutral-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        {searchable && isOpen ? (
+          <input 
+            ref={inputRef}
+            type="text" 
+            placeholder="Search..." 
+            className="w-full bg-transparent border-none text-neutral-200 focus:outline-none focus:ring-0 p-0 m-0"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+          />
+        ) : (
+          <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
+        )}
+        <ChevronDown 
+          className={`absolute right-4 h-4 w-4 text-neutral-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
+          onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }} 
+        />
       </div>
 
       {isOpen && (
         <div className="absolute z-50 w-full mt-2 bg-[#1a2332]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl flex flex-col overflow-hidden">
-          {searchable && (
-            <div className="p-2 border-b border-white/10">
-              <input 
-                ref={inputRef}
-                type="text" 
-                placeholder="Search..." 
-                className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-neutral-200 focus:outline-none focus:border-cyan-500/50"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onClick={(e) => e.stopPropagation()}
-              />
-            </div>
-          )}
           <div className="max-h-60 overflow-y-auto py-2">
             <div 
               className={`px-4 py-2.5 text-sm cursor-pointer transition-colors select-none ${value === '' ? 'bg-cyan-500/10 text-cyan-400' : 'text-neutral-400 hover:bg-white/5 hover:text-neutral-200'}`}
@@ -174,6 +176,12 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
         searchTerms = ['quality assurance', 'qa'];
       } else if (lowerDiscipline === 'embedded systems') {
         searchTerms = ['embedded'];
+      } else if (lowerDiscipline === 'digital') {
+        searchTerms = ['digital'];
+      } else if (lowerDiscipline === 'computer engineering') {
+        searchTerms = ['computer'];
+      } else if (lowerDiscipline === 'electronics engineering') {
+        searchTerms = ['electronic'];
       } else {
         const shortened = lowerDiscipline
           .replace(' development', '')
@@ -201,21 +209,22 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
 
   const uniqueDisciplines = useMemo(() => {
     const dSet = new Set<string>([
+      "AI",
+      "Digital",
+      "Testing",
+      "Computer Engineering",
+      "Electronics Engineering",
       "Software Engineering",
-      "Digital Design",
-      "Digital Verification",
       "Embedded Systems",
       "Physical Design",
       "Frontend Development",
       "Backend Development",
       "Full Stack Development",
       "Quality Assurance",
-      "Testing",
       "DevOps",
       "Cloud",
       "Data Science",
       "Machine Learning",
-      "AI",
       "Hardware Engineering",
       "Systems Engineering",
       "Civil Engineering",
@@ -246,19 +255,33 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
     });
 
     const targetEngineering = [
-        "engineering", "software", "digital design", "digital verification", 
-        "embedded", "testing", "devops", "cloud", "ai", "machine learning", 
+        "engineering", "software", "embedded", "devops", "cloud", "machine learning", 
         "data", "frontend", "backend", "full stack", "quality", "physical design"
     ];
+
+    // Priority Order: AI, Digital, Testing, Computer, Electronics
+    const priorityOrder = ["ai", "digital", "testing", "computer engineering", "electronics engineering"];
 
     return Array.from(dSet).sort((a, b) => {
       const aName = a.toLowerCase();
       const bName = b.toLowerCase();
+
+      // Check explicit priority
+      const aPriorityIdx = priorityOrder.indexOf(aName);
+      const bPriorityIdx = priorityOrder.indexOf(bName);
+
+      if (aPriorityIdx !== -1 && bPriorityIdx !== -1) return aPriorityIdx - bPriorityIdx;
+      if (aPriorityIdx !== -1) return -1;
+      if (bPriorityIdx !== -1) return 1;
+
+      // Then check engineering
       const aIsEng = aName.includes('engineer') || targetEngineering.some(t => aName.includes(t));
       const bIsEng = bName.includes('engineer') || targetEngineering.some(t => bName.includes(t));
       
       if (aIsEng && !bIsEng) return -1;
       if (!aIsEng && bIsEng) return 1;
+
+      // Fallback to alphabetical
       return aName.localeCompare(bName);
     });
   }, [initialJobs]);
