@@ -136,6 +136,23 @@ function CustomSelect({
 }
 
 export default function JobsClient({ initialJobs, serverError }: { initialJobs: JobData[], serverError?: string }) {
+
+  const normalizeCompany = (c: string) => {
+      if (!c) return '';
+      const lower = c.toLowerCase();
+      if (lower.includes("siemens energy")) return "Siemens Energy";
+      if (lower.includes("siemens gamesa")) return "Siemens Gamesa";
+      if (lower.includes("siemens digital industries software") || lower.includes("siemens dis") || lower.includes("siemens eda")) return "Siemens Digital Industries Software";
+      if (lower.includes("siemens")) return "Siemens";
+      if (lower.includes("mixel")) return "Mixel-Egypt";
+      if (lower.includes("capgemini")) return "Capgemini";
+      if (lower.includes("stmicroelectronics")) return "STMicroelectronics";
+      if (lower.includes("analog devices")) return "Analog Devices";
+      if (lower.includes("infinilink")) return "InfiniLink";
+      if (lower.includes("valeo")) return "Valeo";
+      if (lower.includes("iss international spa")) return "ISS INTERNATIONAL SpA";
+      return c;
+  };
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDiscipline, setSelectedDiscipline] = useState('');
   const [selectedCompany, setSelectedCompany] = useState('');
@@ -153,7 +170,9 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
     }
 
     if (selectedCompany) {
-      result = result.filter(job => job.company?.toLowerCase() === selectedCompany.toLowerCase());
+      result = result.filter(job => {
+        return normalizeCompany(job.company || '').toLowerCase() === selectedCompany.toLowerCase();
+      });
     }
 
     if (selectedDiscipline) {
@@ -234,7 +253,19 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
       "IT",
       "UI/UX Design",
       "Product Management",
-      "Project Management"
+      "Project Management",
+      "Automation Machinery Manufacturing",
+      "Engineering",
+      "Software Development",
+      "Appliance, Electrical, and Electronics Manufacturing",
+      "Semiconductor Manufacturing",
+      "Computer Hardware Manufacturing, Semiconductor Manufacturing, and Wireless Services",
+      "Information Technology & Services",
+      "Software Development and Engineering Services",
+      "Computer Science & AI",
+      "Motor Vehicle Parts Manufacturing",
+      "Oil and gas",
+      "Uncategorized"
     ]);
 
     (initialJobs || []).forEach(job => {
@@ -287,24 +318,29 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
   }, [initialJobs]);
 
   const uniqueCompanies = useMemo(() => {
-    const comps = new Set((initialJobs || []).map(j => j.company).filter(Boolean));
-    const targetCompanies = [
-      "siemens", "capgemini", "cisco", "siemens energy", "stmicroelectronics", 
-      "mediatek", "brightskies", "hcltech", "nawy", "analog devices", 
-      "infinilink", "valeo", "siemens gamesa", "iss international spa", 
-      "siemens digital industries software", "mixel-egypt", "si vision", "global foundaries", "si bits"
+    const targetOrder = [
+      "Siemens", "Capgemini", "Cisco", "Siemens Energy", "STMicroelectronics", 
+      "MediaTek", "Brightskies", "HCLTech", "Nawy", "Analog Devices", 
+      "InfiniLink", "Valeo", "Siemens Gamesa", "ISS INTERNATIONAL SpA", 
+      "Siemens Digital Industries Software", "Mixel-Egypt"
     ];
 
+    const comps = new Set<string>();
+    (initialJobs || []).forEach(j => {
+      if (j.company) {
+        comps.add(normalizeCompany(j.company));
+      }
+    });
+
     return Array.from(comps).sort((a, b) => {
-      const aName = (a as string).toLowerCase();
-      const bName = (b as string).toLowerCase();
-      const aIsTarget = targetCompanies.some(tc => aName.includes(tc));
-      const bIsTarget = targetCompanies.some(tc => bName.includes(tc));
-      
-      if (aIsTarget && !bIsTarget) return -1;
-      if (!aIsTarget && bIsTarget) return 1;
-      return aName.localeCompare(bName);
-    }) as string[];
+      const aIdx = targetOrder.indexOf(a);
+      const bIdx = targetOrder.indexOf(b);
+
+      if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+      if (aIdx !== -1) return -1;
+      if (bIdx !== -1) return 1;
+      return a.localeCompare(b);
+    });
   }, [initialJobs]);
 
   return (
@@ -385,7 +421,7 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
               <div 
                 key={job.id} 
                 onClick={() => window.open(job.url, '_blank')}
-                className="bg-[#151c2c]/80 backdrop-blur-sm border border-white/5 hover:border-white/10 hover:bg-[#1a2336] transition-all cursor-pointer rounded-2xl p-6 flex flex-col relative group"
+                className="bg-[#151c2c]/80 backdrop-blur-sm border border-white/5 hover:border-[#70B5DF] hover:[box-shadow:0px_0px_15px_rgba(112,181,223,0.3)] hover:bg-[#1a2336] transition-all duration-300 cursor-pointer rounded-2xl p-6 flex flex-col relative group"
               >
                 {/* Top Row: Logo and EG Badge */}
                 <div className="flex items-start justify-between mb-5">
@@ -408,8 +444,9 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
                   {job.company || 'Unknown Company'}
                 </p>
 
-                {/* Tags (Bottom) */}
-                <div className="mt-auto flex flex-wrap gap-2">
+                {/* Bottom Section: Tags and Apply Button */}
+                <div className="mt-auto flex items-end justify-between gap-4 pt-4">
+                  <div className="flex flex-wrap gap-2">
                   
                   {/* Seniority */}
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
@@ -434,7 +471,13 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
                     <Globe className="w-3.5 h-3.5 flex-shrink-0" />
                     <span className="text-[11px] font-bold">{locationShort}</span>
                   </div>
-                  
+                </div>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); window.open(job.url, '_blank'); }}
+                    className="shrink-0 bg-[#70B5DF]/10 hover:bg-[#70B5DF]/20 hover:[box-shadow:0px_0px_10px_#70B5DF] border border-[#70B5DF]/50 text-[#70B5DF] px-5 py-2 rounded-xl font-bold text-sm transition-all duration-300"
+                  >
+                    Apply
+                  </button>
                 </div>
               </div>
             );
