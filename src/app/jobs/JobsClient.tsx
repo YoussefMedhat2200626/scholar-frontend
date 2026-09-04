@@ -38,16 +38,20 @@ function CustomSelect({
   onChange,
   options,
   placeholder,
-  icon: Icon
+  icon: Icon,
+  searchable = false
 }: {
   value: string;
   onChange: (val: string) => void;
   options: { label: string; value: string }[];
   placeholder: string;
   icon?: any;
+  searchable?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
   const ref = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -59,7 +63,19 @@ function CustomSelect({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (isOpen && searchable && inputRef.current) {
+        inputRef.current.focus();
+    }
+    if (!isOpen) {
+        setSearch('');
+    }
+  }, [isOpen, searchable]);
+
   const selectedOption = options.find(o => o.value === value);
+  const filteredOptions = searchable 
+    ? options.filter(o => o.label.toLowerCase().includes(search.toLowerCase()))
+    : options;
 
   return (
     <div className="relative flex-1 lg:max-w-[280px]" ref={ref}>
@@ -77,22 +93,40 @@ function CustomSelect({
       </div>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-2 bg-[#1a2332]/60 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl max-h-60 overflow-y-auto py-2">
-          <div 
-            className={`px-4 py-2.5 text-sm cursor-pointer transition-colors select-none ${value === '' ? 'bg-cyan-500/10 text-cyan-400' : 'text-neutral-400 hover:bg-white/5 hover:text-neutral-200'}`}
-            onClick={() => { onChange(''); setIsOpen(false); }}
-          >
-            {placeholder}
-          </div>
-          {options.map((opt) => (
-            <div 
-              key={opt.value}
-              className={`px-4 py-2.5 text-sm cursor-pointer transition-colors select-none ${value === opt.value ? 'bg-cyan-500/10 text-cyan-400' : 'text-neutral-300 hover:bg-white/5 hover:text-neutral-100'}`}
-              onClick={() => { onChange(opt.value); setIsOpen(false); }}
-            >
-              {opt.label}
+        <div className="absolute z-50 w-full mt-2 bg-[#1a2332]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl flex flex-col overflow-hidden">
+          {searchable && (
+            <div className="p-2 border-b border-white/10">
+              <input 
+                ref={inputRef}
+                type="text" 
+                placeholder="Search..." 
+                className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-neutral-200 focus:outline-none focus:border-cyan-500/50"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+              />
             </div>
-          ))}
+          )}
+          <div className="max-h-60 overflow-y-auto py-2">
+            <div 
+              className={`px-4 py-2.5 text-sm cursor-pointer transition-colors select-none ${value === '' ? 'bg-cyan-500/10 text-cyan-400' : 'text-neutral-400 hover:bg-white/5 hover:text-neutral-200'}`}
+              onClick={() => { onChange(''); setIsOpen(false); }}
+            >
+              {placeholder}
+            </div>
+            {filteredOptions.map((opt) => (
+              <div 
+                key={opt.value}
+                className={`px-4 py-2.5 text-sm cursor-pointer transition-colors select-none ${value === opt.value ? 'bg-cyan-500/10 text-cyan-400' : 'text-neutral-300 hover:bg-white/5 hover:text-neutral-100'}`}
+                onClick={() => { onChange(opt.value); setIsOpen(false); }}
+              >
+                {opt.label}
+              </div>
+            ))}
+            {filteredOptions.length === 0 && (
+               <div className="px-4 py-2 text-sm text-neutral-500">No results found</div>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -121,13 +155,28 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
       result = result.filter(job => job.company?.toLowerCase() === selectedCompany.toLowerCase());
     }
 
-    // Simplified filtering logic for demo
     return result;
   }, [initialJobs, searchQuery, selectedCompany]);
 
   const uniqueCompanies = useMemo(() => {
     const comps = new Set((initialJobs || []).map(j => j.company).filter(Boolean));
-    return Array.from(comps).sort() as string[];
+    const targetCompanies = [
+      "siemens", "capgemini", "cisco", "siemens energy", "stmicroelectronics", 
+      "mediatek", "brightskies", "hcltech", "nawy", "analog devices", 
+      "infinilink", "valeo", "siemens gamesa", "iss international spa", 
+      "siemens digital industries software", "mixel-egypt", "si vision", "global foundaries", "si bits"
+    ];
+
+    return Array.from(comps).sort((a, b) => {
+      const aName = (a as string).toLowerCase();
+      const bName = (b as string).toLowerCase();
+      const aIsTarget = targetCompanies.some(tc => aName.includes(tc));
+      const bIsTarget = targetCompanies.some(tc => bName.includes(tc));
+      
+      if (aIsTarget && !bIsTarget) return -1;
+      if (!aIsTarget && bIsTarget) return 1;
+      return aName.localeCompare(bName);
+    }) as string[];
   }, [initialJobs]);
 
   return (
@@ -146,7 +195,7 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
         </h1>
 
         {/* Filter Bar */}
-        <div className="flex flex-col lg:flex-row gap-4 mb-12 bg-[#1a2332]/80 backdrop-blur-md p-2 rounded-2xl border border-white/5 shadow-lg">
+        <div className="flex flex-col lg:flex-row gap-4 mb-12 bg-[#1a2332]/80 backdrop-blur-md p-2 rounded-2xl border border-white/5 shadow-lg relative z-50">
           
           {/* Countries Dropdown */}
           <CustomSelect
@@ -191,6 +240,7 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
             onChange={setSelectedCompany}
             placeholder="All Companies"
             options={uniqueCompanies.map(c => ({ label: c, value: c }))}
+            searchable
           />
           
         </div>
@@ -204,7 +254,7 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
         )}
 
         {/* Job Grid */}
-        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 relative z-10">
           {filteredJobs.map((job: JobData) => {
             
             let parsedTags = [];
