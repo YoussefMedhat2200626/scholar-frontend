@@ -1,6 +1,10 @@
 "use client";
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import JobModal from './components/JobModal';
+import CompanyModal from './components/CompanyModal';
+import CompaniesGrid from './components/CompaniesGrid';
+import { CompanyMeta } from '@/src/data/companies';
 import { Search, ChevronDown, User, Briefcase, Code, Globe, AlertCircle } from 'lucide-react';
 
 const getCompanyColor = (companyName: string) => {
@@ -156,6 +160,9 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDiscipline, setSelectedDiscipline] = useState('');
   const [selectedCompany, setSelectedCompany] = useState('');
+  const [activeTab, setActiveTab] = useState<'jobs' | 'companies'>('jobs');
+  const [selectedJob, setSelectedJob] = useState<JobData | null>(null);
+  const [selectedCompanyModal, setSelectedCompanyModal] = useState<CompanyMeta | null>(null);
 
   const filteredJobs = useMemo(() => {
     let result = (initialJobs || []);
@@ -353,12 +360,31 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
 
       <div className="max-w-[1440px] mx-auto relative z-10">
         
-        {/* Title */}
-        <h1 className="text-4xl sm:text-5xl font-extrabold text-white mb-8 tracking-wide uppercase">
-          Global Career Map
-        </h1>
+        {/* Tabs */}
+        <div className="flex gap-2 border-b border-white/10 mb-8 overflow-x-auto custom-scrollbar">
+          <button 
+            onClick={() => setActiveTab('jobs')}
+            className={`pb-4 px-6 font-bold text-lg whitespace-nowrap transition-all border-b-2 ${activeTab === 'jobs' ? 'border-[#70B5DF] text-[#70B5DF]' : 'border-transparent text-neutral-500 hover:text-neutral-300'}`}
+          >
+            Career Map
+          </button>
+          <button 
+            onClick={() => setActiveTab('companies')}
+            className={`pb-4 px-6 font-bold text-lg whitespace-nowrap transition-all border-b-2 ${activeTab === 'companies' ? 'border-[#70B5DF] text-[#70B5DF]' : 'border-transparent text-neutral-500 hover:text-neutral-300'}`}
+          >
+            Companies
+          </button>
+        </div>
 
-        {/* Filter Bar */}
+        {activeTab === 'companies' ? (
+          <CompaniesGrid onCompanyClick={setSelectedCompanyModal} />
+        ) : (
+          <>
+            {/* Title */}
+            <h1 className="text-4xl sm:text-5xl font-extrabold text-white mb-8 tracking-wide uppercase">
+              Global Career Map
+            </h1>
+            {/* Filter Bar */}
         <div className="flex flex-col lg:flex-row gap-4 mb-12 bg-[#1a2332]/80 backdrop-blur-md p-2 rounded-2xl border border-white/5 shadow-lg relative z-50">
           
           {/* Search Input */}
@@ -416,11 +442,12 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
             const seniority = parsedTags.find((t: string) => t.toLowerCase().includes('senior') || t.toLowerCase().includes('junior') || t.toLowerCase().includes('mid')) || 'Mid-Level';
             const discipline = parsedTags.filter((t: string) => !t.toLowerCase().includes('senior') && !t.toLowerCase().includes('junior') && !t.toLowerCase().includes('mid') && !t.toLowerCase().includes('remote') && !t.toLowerCase().includes('hybrid') && !t.toLowerCase().includes('on-site') && !t.toLowerCase().includes('full-time') && !t.toLowerCase().includes('part-time')).slice(0, 3).join(', ') || 'Engineering';
             const locationShort = (job.location?.includes('Egypt') || job.location?.includes('Cairo')) ? 'EG' : 'Remote';
+            const dateFormatted = job.first_seen_at ? new Date(job.first_seen_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recently';
             
             return (
               <div 
                 key={job.id} 
-                onClick={() => window.open(job.url, '_blank')}
+                onClick={() => setSelectedJob(job)}
                 className="bg-[#151c2c]/80 backdrop-blur-sm border border-white/5 hover:border-[#70B5DF] hover:[box-shadow:0px_0px_15px_rgba(112,181,223,0.3)] hover:bg-[#1a2336] transition-all duration-300 cursor-pointer rounded-2xl p-6 flex flex-col relative group"
               >
                 {/* Top Row: Logo and EG Badge */}
@@ -429,10 +456,11 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
                     {job.company ? job.company.charAt(0).toUpperCase() : 'C'}
                   </div>
                   
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col items-end gap-1">
                     <div className="px-2.5 py-1 rounded bg-white/5 border border-white/10 text-neutral-300 text-xs font-bold tracking-wider">
                       EG
                     </div>
+                    <span className="text-[10px] text-neutral-500 font-bold">{dateFormatted}</span>
                   </div>
                 </div>
 
@@ -483,8 +511,23 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
             );
           })}
         </div>
-        
+        </>
+        )}
       </div>
+      
+      <JobModal 
+        job={selectedJob} 
+        isOpen={!!selectedJob} 
+        onClose={() => setSelectedJob(null)} 
+        getCompanyColor={getCompanyColor}
+      />
+      
+      <CompanyModal
+        company={selectedCompanyModal}
+        isOpen={!!selectedCompanyModal}
+        onClose={() => setSelectedCompanyModal(null)}
+        jobs={initialJobs}
+      />
     </div>
   );
 }
