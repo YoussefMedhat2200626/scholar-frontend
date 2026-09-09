@@ -397,14 +397,14 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
   }, [otherCompaniesList, companySearchQuery]);
 
   return (
-    <div className="min-h-screen bg-[#09111e] font-main tracking-eyebrow pt-32 pb-24 px-4 sm:px-6 lg:px-12 relative overflow-clip">
+    <div className="h-screen bg-[#09111e] font-main tracking-eyebrow pt-32 pb-6 px-4 sm:px-6 lg:px-12 relative overflow-hidden flex flex-col">
       
       {/* Background Glows matching Figma */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
         <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-cyan-900/20 blur-[150px] rounded-full translate-x-1/3 -translate-y-1/3"></div>
       </div>
 
-      <div className="max-w-[1440px] mx-auto relative z-10">
+      <div className="max-w-[1440px] mx-auto relative z-10 flex flex-col flex-1 min-h-0 w-full">
         
         {/* Tabs */}
         <div className="flex gap-2 border-b border-white/10 mb-8 overflow-x-auto custom-scrollbar">
@@ -431,7 +431,7 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
               Global Career Map
             </h1>
             {/* Filter Bar */}
-        <div className="flex flex-col lg:flex-row gap-4 mb-12 bg-[#1a2332]/80 backdrop-blur-md p-2 rounded-2xl border border-white/5 shadow-lg relative sticky top-24 z-50">
+        <div className="flex flex-col lg:flex-row gap-4 mb-6 bg-[#1a2332]/80 backdrop-blur-md p-2 rounded-2xl border border-white/5 shadow-lg relative z-50 shrink-0">
           
           {/* Select Countries Button */}
           <button 
@@ -478,12 +478,12 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
         )}
 
         {/* Sidebar + Main Content Layout */}
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col lg:flex-row gap-8 flex-1 min-h-0">
           
           {/* Left Sidebar - Brands/Companies Filter */}
           <aside className="w-full lg:w-64 shrink-0 flex flex-col gap-4">
-            <div className="bg-[#1a2332]/80 backdrop-blur-md rounded-2xl border border-white/5 p-4 shadow-lg sticky top-48">
-              <div className="flex items-center justify-between mb-4">
+            <div className="bg-[#1a2332]/80 backdrop-blur-md rounded-2xl border border-white/5 p-4 shadow-lg flex flex-col h-full max-h-full min-h-0">
+              <div className="flex items-center justify-between mb-4 shrink-0">
                 <h3 className="text-lg font-bold text-white tracking-wide uppercase">Brand</h3>
                 <ChevronUp className="w-4 h-4 text-neutral-400" />
               </div>
@@ -503,7 +503,7 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
               </div>
 
               {/* Company Checkboxes */}
-              <div className="flex flex-col gap-3 max-h-[350px] overflow-y-auto custom-scrollbar pr-2">
+              <div className="flex flex-col gap-3 flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-0">
                 {filteredMainCompanies.map(company => (
                   <label key={company} onClick={() => handleToggleCompany(company)} className="flex items-center gap-3 cursor-pointer group">
                     <div className={`w-5 h-5 rounded flex items-center justify-center border transition-all ${selectedCompaniesFilter.includes(company) ? 'bg-[#70B5DF] border-[#70B5DF]' : 'bg-[#111827]/50 border-white/10 group-hover:border-white/30'}`}>
@@ -536,7 +536,7 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
           </aside>
 
           {/* Main Content - Jobs Grid */}
-          <div className="flex-1">
+          <div className="flex-1 overflow-y-auto custom-scrollbar pb-12 pr-2">
             {filteredJobs.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 bg-[#1a2332]/50 rounded-2xl border border-white/5">
                 <AlertCircle className="w-12 h-12 text-neutral-500 mb-4" />
