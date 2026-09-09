@@ -46,4 +46,4 @@ report/*
 !report/report.pdf
 
 # Data files 
-data/*
+data/*scratch/

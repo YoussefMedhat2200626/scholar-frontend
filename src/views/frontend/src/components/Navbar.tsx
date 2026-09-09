@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   BarChart3, Briefcase, Home, GitCompare, Sun, Moon, Monitor,
-  DollarSign, Menu, X, Layers,
+  DollarSign, Menu, X, Layers, Globe,
 } from "lucide-react";
 import { useThemeStore } from "@/store/themeStore";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { to: "/insights/clustering", label: "Clustering", icon: Layers },
   { to: "/compare", label: "Compare", icon: GitCompare },
   { to: "/salary", label: "Salary", icon: DollarSign },
+  { to: "/map", label: "Map", icon: Globe },
 ];
 
 const THEME_OPTIONS = [
