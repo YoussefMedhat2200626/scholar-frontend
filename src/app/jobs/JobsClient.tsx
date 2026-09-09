@@ -3,9 +3,10 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import JobModal from './components/JobModal';
 import CompanyModal from './components/CompanyModal';
+import MapFilterModal from './components/MapFilterModal';
 import CompaniesGrid from './components/CompaniesGrid';
 import { CompanyMeta } from '@/src/data/companies';
-import { Search, ChevronDown, User, Briefcase, Code, Globe, AlertCircle } from 'lucide-react';
+import { Search, ChevronDown, User, Briefcase, Code, Globe, AlertCircle, Map } from 'lucide-react';
 
 const getCompanyColor = (companyName: string) => {
   const colors = [
@@ -163,6 +164,15 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
   const [activeTab, setActiveTab] = useState<'jobs' | 'companies'>('jobs');
   const [selectedJob, setSelectedJob] = useState<JobData | null>(null);
   const [selectedCompanyModal, setSelectedCompanyModal] = useState<CompanyMeta | null>(null);
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+  const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
+  
+  const handleToggleCountry = (country: string) => {
+    setSelectedCountries(prev => 
+      prev.includes(country) ? prev.filter(c => c !== country) : [...prev, country]
+    );
+  };
+
 
   const filteredJobs = useMemo(() => {
     let result = (initialJobs || []);
@@ -230,8 +240,17 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
       });
     }
 
+    
+    if (selectedCountries.length > 0) {
+      result = result.filter(job => {
+        if (!job.location) return false;
+        // Standardize somewhat, or just do simple string includes
+        return selectedCountries.some(country => job.location!.toLowerCase().includes(country.toLowerCase()));
+      });
+    }
+
     return result;
-  }, [initialJobs, searchQuery, selectedCompany, selectedDiscipline]);
+  }, [initialJobs, searchQuery, selectedCompany, selectedDiscipline, selectedCountries]);
 
   const uniqueDisciplines = useMemo(() => {
     const dSet = new Set<string>([
@@ -387,6 +406,15 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
             {/* Filter Bar */}
         <div className="flex flex-col lg:flex-row gap-4 mb-12 bg-[#1a2332]/80 backdrop-blur-md p-2 rounded-2xl border border-white/5 shadow-lg relative z-50">
           
+          {/* Select Countries Button */}
+          <button 
+            onClick={() => setIsMapModalOpen(true)}
+            className="flex items-center gap-2 bg-[#111827]/50 border border-white/5 text-neutral-200 text-sm rounded-xl py-3.5 px-5 hover:bg-white/10 transition-colors shrink-0 whitespace-nowrap lg:max-w-[200px]"
+          >
+            <Map className="w-4 h-4 text-neutral-400 shrink-0" />
+            <span className="truncate">Select Countries ({selectedCountries.length})</span>
+          </button>
+
           {/* Search Input */}
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none z-10">
@@ -514,6 +542,14 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
         </>
         )}
       </div>
+      
+      <MapFilterModal
+        isOpen={isMapModalOpen}
+        onClose={() => setIsMapModalOpen(false)}
+        selectedCountries={selectedCountries}
+        onToggleCountry={handleToggleCountry}
+        onConfirm={() => setIsMapModalOpen(false)}
+      />
       
       <JobModal 
         job={selectedJob} 

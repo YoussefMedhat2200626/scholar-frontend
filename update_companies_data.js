@@ -1,4 +1,7 @@
-export interface CompanyMeta {
+const fs = require('fs');
+const path = 'src/data/companies.ts';
+
+const content = `export interface CompanyMeta {
   id: string;
   name: string;
   shortName: string;
@@ -222,3 +225,6 @@ export const COMPANIES_META: CompanyMeta[] = [
     color: "bg-red-500",
   }
 ];
+`;
+fs.writeFileSync(path, content, 'utf8');
+console.log('companies.ts updated.');
