@@ -497,13 +497,13 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
           {/* Left Sidebar - Brands/Companies Filter */}
           <aside className="w-full lg:w-64 shrink-0 flex flex-col gap-4">
             <div className="bg-[#1a2332]/80 backdrop-blur-md rounded-2xl border border-white/5 p-4 shadow-lg flex flex-col h-full max-h-full min-h-0">
-              <div className="flex items-center justify-between mb-4 shrink-0">
+              <div className="flex items-center justify-between mb-3 shrink-0">
                 <h3 className="text-lg font-bold text-white tracking-wide uppercase">Brand</h3>
                 <ChevronUp className="w-4 h-4 text-neutral-400" />
               </div>
               
               {/* Search Companies */}
-              <div className="relative mb-4">
+              <div className="relative mb-3">
                 <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none z-10">
                   <Search className="h-4 w-4 text-neutral-400" />
                 </div>
@@ -517,7 +517,7 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
               </div>
 
               {/* Company Checkboxes */}
-              <div className="flex flex-col gap-3 flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-0">
+              <div className="flex flex-col gap-1.5 flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-0">
                 {filteredMainCompanies.map(company => (
                   <label key={company} onClick={() => handleToggleCompany(company)} className="flex items-center gap-3 cursor-pointer group">
                     <div className={`w-5 h-5 rounded flex items-center justify-center border transition-all ${selectedCompaniesFilter.includes(company) ? 'bg-[#70B5DF] border-[#70B5DF]' : 'bg-[#111827]/50 border-white/10 group-hover:border-white/30'}`}>
