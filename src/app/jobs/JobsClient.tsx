@@ -390,11 +390,25 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
   }, [uniqueCompanies, mainCompaniesList]);
   
   const filteredMainCompanies = useMemo(() => {
-    return mainCompaniesList.filter(c => c.toLowerCase().includes(companySearchQuery.toLowerCase()));
-  }, [mainCompaniesList, companySearchQuery]);
+    const filtered = mainCompaniesList.filter(c => c.toLowerCase().includes(companySearchQuery.toLowerCase()));
+    return filtered.sort((a, b) => {
+      const aSelected = selectedCompaniesFilter.includes(a);
+      const bSelected = selectedCompaniesFilter.includes(b);
+      if (aSelected && !bSelected) return -1;
+      if (!aSelected && bSelected) return 1;
+      return 0;
+    });
+  }, [mainCompaniesList, companySearchQuery, selectedCompaniesFilter]);
   const filteredOtherCompanies = useMemo(() => {
-    return otherCompaniesList.filter(c => c.toLowerCase().includes(companySearchQuery.toLowerCase()));
-  }, [otherCompaniesList, companySearchQuery]);
+    const filtered = otherCompaniesList.filter(c => c.toLowerCase().includes(companySearchQuery.toLowerCase()));
+    return filtered.sort((a, b) => {
+      const aSelected = selectedCompaniesFilter.includes(a);
+      const bSelected = selectedCompaniesFilter.includes(b);
+      if (aSelected && !bSelected) return -1;
+      if (!aSelected && bSelected) return 1;
+      return 0;
+    });
+  }, [otherCompaniesList, companySearchQuery, selectedCompaniesFilter]);
 
   return (
     <div className="h-screen bg-[#09111e] font-main tracking-eyebrow pt-32 pb-12 px-4 sm:px-6 lg:px-12 relative overflow-hidden flex flex-col">
