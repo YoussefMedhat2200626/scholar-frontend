@@ -397,7 +397,7 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
   }, [otherCompaniesList, companySearchQuery]);
 
   return (
-    <div className="min-h-screen bg-[#09111e] font-main tracking-eyebrow pt-32 pb-24 px-4 sm:px-6 lg:px-12 relative overflow-hidden">
+    <div className="min-h-screen bg-[#09111e] font-main tracking-eyebrow pt-32 pb-24 px-4 sm:px-6 lg:px-12 relative overflow-clip">
       
       {/* Background Glows matching Figma */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
@@ -431,7 +431,7 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
               Global Career Map
             </h1>
             {/* Filter Bar */}
-        <div className="flex flex-col lg:flex-row gap-4 mb-12 bg-[#1a2332]/80 backdrop-blur-md p-2 rounded-2xl border border-white/5 shadow-lg relative z-50">
+        <div className="flex flex-col lg:flex-row gap-4 mb-12 bg-[#1a2332]/80 backdrop-blur-md p-2 rounded-2xl border border-white/5 shadow-lg relative sticky top-24 z-50">
           
           {/* Select Countries Button */}
           <button 
@@ -482,7 +482,7 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
           
           {/* Left Sidebar - Brands/Companies Filter */}
           <aside className="w-full lg:w-64 shrink-0 flex flex-col gap-4">
-            <div className="bg-[#1a2332]/80 backdrop-blur-md rounded-2xl border border-white/5 p-4 shadow-lg sticky top-24">
+            <div className="bg-[#1a2332]/80 backdrop-blur-md rounded-2xl border border-white/5 p-4 shadow-lg sticky top-48">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-white tracking-wide uppercase">Brand</h3>
                 <ChevronUp className="w-4 h-4 text-neutral-400" />
