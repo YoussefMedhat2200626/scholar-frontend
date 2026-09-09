@@ -505,7 +505,7 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
               {/* Company Checkboxes */}
               <div className="flex flex-col gap-3 max-h-[350px] overflow-y-auto custom-scrollbar pr-2">
                 {filteredMainCompanies.map(company => (
-                  <label key={company} className="flex items-center gap-3 cursor-pointer group">
+                  <label key={company} onClick={() => handleToggleCompany(company)} className="flex items-center gap-3 cursor-pointer group">
                     <div className={`w-5 h-5 rounded flex items-center justify-center border transition-all ${selectedCompaniesFilter.includes(company) ? 'bg-[#70B5DF] border-[#70B5DF]' : 'bg-[#111827]/50 border-white/10 group-hover:border-white/30'}`}>
                       {selectedCompaniesFilter.includes(company) && <Check className="w-3.5 h-3.5 text-[#0a0f18] font-bold" />}
                     </div>
@@ -514,7 +514,7 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
                 ))}
 
                 {showAllCompanies && filteredOtherCompanies.map(company => (
-                  <label key={company} className="flex items-center gap-3 cursor-pointer group">
+                  <label key={company} onClick={() => handleToggleCompany(company)} className="flex items-center gap-3 cursor-pointer group">
                     <div className={`w-5 h-5 rounded flex items-center justify-center border transition-all ${selectedCompaniesFilter.includes(company) ? 'bg-[#70B5DF] border-[#70B5DF]' : 'bg-[#111827]/50 border-white/10 group-hover:border-white/30'}`}>
                       {selectedCompaniesFilter.includes(company) && <Check className="w-3.5 h-3.5 text-[#0a0f18] font-bold" />}
                     </div>
