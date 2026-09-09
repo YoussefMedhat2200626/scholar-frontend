@@ -397,7 +397,7 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
   }, [otherCompaniesList, companySearchQuery]);
 
   return (
-    <div className="h-screen bg-[#09111e] font-main tracking-eyebrow pt-32 pb-6 px-4 sm:px-6 lg:px-12 relative overflow-hidden flex flex-col">
+    <div className="h-screen bg-[#09111e] font-main tracking-eyebrow pt-32 pb-12 px-4 sm:px-6 lg:px-12 relative overflow-hidden flex flex-col">
       
       {/* Background Glows matching Figma */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
@@ -407,7 +407,7 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
       <div className="max-w-[1440px] mx-auto relative z-10 flex flex-col flex-1 min-h-0 w-full">
         
         {/* Tabs */}
-        <div className="flex gap-2 border-b border-white/10 mb-8 overflow-x-auto custom-scrollbar">
+        <div className="flex gap-2 border-b border-white/10 mb-8 overflow-x-auto custom-scrollbar shrink-0">
           <button 
             onClick={() => setActiveTab('jobs')}
             className={`pb-4 px-6 font-bold text-lg whitespace-nowrap transition-all border-b-2 ${activeTab === 'jobs' ? 'border-[#70B5DF] text-[#70B5DF]' : 'border-transparent text-neutral-500 hover:text-neutral-300'}`}
@@ -427,11 +427,11 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
         ) : (
           <>
             {/* Title */}
-            <h1 className="text-4xl sm:text-5xl font-extrabold text-white mb-8 tracking-wide uppercase">
+            <h1 className="text-4xl sm:text-5xl font-extrabold text-white mb-8 tracking-wide uppercase shrink-0">
               Global Career Map
             </h1>
             {/* Filter Bar */}
-        <div className="flex flex-col lg:flex-row gap-4 mb-6 bg-[#1a2332]/80 backdrop-blur-md p-2 rounded-2xl border border-white/5 shadow-lg relative z-50 shrink-0">
+        <div className="flex flex-col lg:flex-row gap-4 mb-12 bg-[#1a2332]/80 backdrop-blur-md p-2 rounded-2xl border border-white/5 shadow-lg relative z-50 shrink-0">
           
           {/* Select Countries Button */}
           <button 
