@@ -5,8 +5,8 @@ import JobModal from './components/JobModal';
 import CompanyModal from './components/CompanyModal';
 import MapFilterModal from './components/MapFilterModal';
 import CompaniesGrid from './components/CompaniesGrid';
-import { CompanyMeta } from '@/src/data/companies';
-import { Search, ChevronDown, User, Briefcase, Code, Globe, AlertCircle, Map } from 'lucide-react';
+import { CompanyMeta, COMPANIES_META } from '@/src/data/companies';
+import { Search, ChevronDown, User, Briefcase, Code, Globe, AlertCircle, Map, ChevronUp, Check } from 'lucide-react';
 
 const getCompanyColor = (companyName: string) => {
   const colors = [
@@ -159,6 +159,15 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
       return c;
   };
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCompaniesFilter, setSelectedCompaniesFilter] = useState<string[]>([]);
+  const [companySearchQuery, setCompanySearchQuery] = useState('');
+  const [showAllCompanies, setShowAllCompanies] = useState(false);
+  
+  const handleToggleCompany = (company: string) => {
+    setSelectedCompaniesFilter(prev => 
+      prev.includes(company) ? prev.filter(c => c !== company) : [...prev, company]
+    );
+  };
   const [selectedDiscipline, setSelectedDiscipline] = useState('');
   const [selectedCompany, setSelectedCompany] = useState('');
   const [activeTab, setActiveTab] = useState<'jobs' | 'companies'>('jobs');
@@ -186,9 +195,11 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
       );
     }
 
-    if (selectedCompany) {
+    
+
+    if (selectedCompaniesFilter.length > 0) {
       result = result.filter(job => {
-        return normalizeCompany(job.company || '').toLowerCase() === selectedCompany.toLowerCase();
+        return selectedCompaniesFilter.includes(normalizeCompany(job.company || ''));
       });
     }
 
@@ -250,7 +261,7 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
     }
 
     return result;
-  }, [initialJobs, searchQuery, selectedCompany, selectedDiscipline, selectedCountries]);
+  }, [initialJobs, searchQuery, selectedCompaniesFilter, selectedDiscipline, selectedCountries]);
 
   const uniqueDisciplines = useMemo(() => {
     const dSet = new Set<string>([
@@ -369,6 +380,22 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
     });
   }, [initialJobs]);
 
+  
+  const mainCompanyNames = useMemo(() => COMPANIES_META.map(c => c.name), []);
+  const mainCompaniesList = useMemo(() => {
+    return uniqueCompanies.filter(c => mainCompanyNames.includes(c) || COMPANIES_META.some(m => m.shortName === c));
+  }, [uniqueCompanies, mainCompanyNames]);
+  const otherCompaniesList = useMemo(() => {
+    return uniqueCompanies.filter(c => !mainCompaniesList.includes(c));
+  }, [uniqueCompanies, mainCompaniesList]);
+  
+  const filteredMainCompanies = useMemo(() => {
+    return mainCompaniesList.filter(c => c.toLowerCase().includes(companySearchQuery.toLowerCase()));
+  }, [mainCompaniesList, companySearchQuery]);
+  const filteredOtherCompanies = useMemo(() => {
+    return otherCompaniesList.filter(c => c.toLowerCase().includes(companySearchQuery.toLowerCase()));
+  }, [otherCompaniesList, companySearchQuery]);
+
   return (
     <div className="min-h-screen bg-[#09111e] font-main tracking-eyebrow pt-32 pb-24 px-4 sm:px-6 lg:px-12 relative overflow-hidden">
       
@@ -438,14 +465,7 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
             searchable
           />
 
-          {/* Companies Dropdown */}
-          <CustomSelect
-            value={selectedCompany}
-            onChange={setSelectedCompany}
-            placeholder="All Companies"
-            options={uniqueCompanies.map(c => ({ label: c, value: c }))}
-            searchable
-          />
+          
           
         </div>
 
