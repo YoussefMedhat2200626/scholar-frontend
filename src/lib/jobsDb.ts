@@ -30,7 +30,10 @@ const globalForPg = global as unknown as { pgPool?: Pool };
 
 function getPool(): Pool {
   if (!globalForPg.pgPool) {
-    const connectionString = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+    let connectionString = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+    if (connectionString && connectionString.includes('sslmode=require')) {
+      connectionString = connectionString.replace('sslmode=require', 'sslmode=verify-full');
+    }
     globalForPg.pgPool = new Pool({
       connectionString,
       ssl: connectionString?.includes('sslmode=') || connectionString?.includes('prisma')
