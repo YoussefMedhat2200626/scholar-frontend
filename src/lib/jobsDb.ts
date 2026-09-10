@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { sql } from '@vercel/postgres';
+import { Pool } from 'pg';
 
 export interface JobItem {
   id: number | string;
@@ -25,6 +25,21 @@ export interface JobItem {
 }
 
 const getJsonDbPath = () => path.join(process.cwd(), 'jobs_export.json');
+
+const globalForPg = global as unknown as { pgPool?: Pool };
+
+function getPool(): Pool {
+  if (!globalForPg.pgPool) {
+    const connectionString = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+    globalForPg.pgPool = new Pool({
+      connectionString,
+      ssl: connectionString?.includes('sslmode=') || connectionString?.includes('prisma')
+        ? { rejectUnauthorized: false }
+        : undefined,
+    });
+  }
+  return globalForPg.pgPool;
+}
 
 export async function getJobs(): Promise<JobItem[]> {
   const isLocalJsonMode = process.env.USE_LOCAL_JSON_DB === 'true';
@@ -59,12 +74,14 @@ export async function getJobs(): Promise<JobItem[]> {
     }
   }
 
-  const { rows } = await sql`
-    SELECT * FROM jobs
-    WHERE (is_taken = false OR is_taken IS NULL)
-      AND COALESCE(NULLIF(last_seen_at, ''), NULLIF(first_seen_at, ''))::timestamptz >= ${thirtyDaysAgo}::timestamptz
-    ORDER BY first_seen_at DESC
-  `;
+  const pool = getPool();
+  const { rows } = await pool.query(
+    `SELECT * FROM jobs
+     WHERE (is_taken = false OR is_taken IS NULL)
+       AND COALESCE(NULLIF(last_seen_at, ''), NULLIF(first_seen_at, ''))::timestamptz >= $1::timestamptz
+     ORDER BY first_seen_at DESC`,
+    [thirtyDaysAgo]
+  );
   return rows as JobItem[];
 }
 
@@ -91,6 +108,10 @@ export async function markJobAsTaken(id: number | string): Promise<{ success: bo
     return { success: true, message: 'Job marked as taken locally' };
   }
 
-  await sql`UPDATE jobs SET is_taken = true, last_checked_at = ${now} WHERE id = ${id}`;
+  const pool = getPool();
+  await pool.query(
+    `UPDATE jobs SET is_taken = true, last_checked_at = $1 WHERE id = $2`,
+    [now, id]
+  );
   return { success: true, message: 'Job marked as taken in database' };
 }
