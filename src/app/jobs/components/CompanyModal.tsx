@@ -38,6 +38,22 @@ export default function CompanyModal({ company, isOpen, onClose, jobs }: Company
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
   const companyJobs = useMemo(() => {
     if (!company) return [];
     return jobs.filter(
