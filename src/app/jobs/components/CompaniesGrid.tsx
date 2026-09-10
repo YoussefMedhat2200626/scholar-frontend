@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import CompanyCard from "./CompanyCard";
 import { CompanyMeta, COMPANIES_META } from "@/src/data/companies";
-import { Search, ChevronDown, MapPin, Briefcase, Lock } from "lucide-react";
+import { Search, ChevronDown, MapPin, Briefcase, X, Check, RotateCcw } from "lucide-react";
 
 interface CompaniesGridProps {
   onCompanyClick: (company: CompanyMeta) => void;
@@ -15,12 +15,14 @@ function GridSelect({
   options,
   placeholder,
   icon: Icon,
+  alignRight = false,
 }: {
   value: string;
   onChange: (val: string) => void;
   options: { label: string; value: string }[];
   placeholder: string;
   icon?: any;
+  alignRight?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -31,18 +33,29 @@ function GridSelect({
         setIsOpen(false);
       }
     };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
   const selectedOption = options.find((o) => o.value === value);
 
   return (
-    <div className="relative shrink-0 min-w-[150px] lg:min-w-[170px]" ref={ref}>
+    <div className="relative shrink-0 min-w-[150px] lg:min-w-[180px]" ref={ref}>
       <div
-        className={`w-full bg-[#111827]/50 border border-white/5 text-neutral-300 text-sm rounded-xl py-3 ${
+        className={`w-full bg-[#111827]/50 border ${
+          value ? "border-cyan-500/40 bg-cyan-950/20" : "border-white/5"
+        } text-neutral-300 text-sm rounded-xl py-3 ${
           Icon ? "pl-10" : "pl-4"
-        } pr-9 cursor-pointer flex items-center justify-between transition-all hover:bg-white/10 select-none`}
+        } pr-10 cursor-pointer flex items-center justify-between transition-all hover:bg-white/10 select-none`}
         onClick={() => setIsOpen(!isOpen)}
       >
         {Icon && (
@@ -50,41 +63,68 @@ function GridSelect({
             <Icon className="h-4 w-4 text-neutral-400" />
           </div>
         )}
-        <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
-        <ChevronDown
-          className={`absolute right-3.5 h-4 w-4 text-neutral-400 transition-transform ${
-            isOpen ? "rotate-180" : ""
-          }`}
-        />
+        <span className={`truncate ${value ? "text-white font-medium" : "text-neutral-400"}`}>
+          {selectedOption ? selectedOption.label : placeholder}
+        </span>
+
+        <div className="absolute right-3.5 flex items-center gap-1.5">
+          {value && (
+            <span
+              role="button"
+              aria-label="Clear selection"
+              className="p-0.5 text-neutral-400 hover:text-white rounded-full hover:bg-white/10 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange("");
+              }}
+            >
+              <X className="w-3.5 h-3.5" />
+            </span>
+          )}
+          <ChevronDown
+            className={`h-4 w-4 text-neutral-400 transition-transform ${
+              isOpen ? "rotate-180" : ""
+            }`}
+          />
+        </div>
       </div>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-2 bg-[#1a2332]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl flex flex-col overflow-hidden max-h-60 overflow-y-auto custom-scrollbar py-1">
+        <div
+          className={`absolute z-50 ${
+            alignRight ? "right-0" : "left-0"
+          } mt-2 min-w-[280px] sm:min-w-[340px] max-w-[420px] bg-[#1a2332]/98 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden max-h-72 overflow-y-auto custom-scrollbar py-2`}
+        >
           <div
-            className={`px-4 py-2.5 text-sm cursor-pointer transition-colors select-none ${
-              value === "" ? "bg-cyan-500/10 text-cyan-400" : "text-neutral-400 hover:bg-white/5 hover:text-neutral-200"
+            className={`px-4 py-2.5 text-sm cursor-pointer transition-colors select-none flex items-center justify-between ${
+              value === ""
+                ? "bg-cyan-500/10 text-cyan-400 font-semibold"
+                : "text-neutral-400 hover:bg-white/5 hover:text-neutral-200"
             }`}
             onClick={() => {
               onChange("");
               setIsOpen(false);
             }}
           >
-            {placeholder}
+            <span>{placeholder} (All)</span>
+            {value === "" && <Check className="w-4 h-4 text-cyan-400 shrink-0" />}
           </div>
+          <div className="h-px bg-white/5 my-1" />
           {options.map((opt) => (
             <div
               key={opt.value}
-              className={`px-4 py-2.5 text-sm cursor-pointer transition-colors select-none truncate ${
+              className={`px-4 py-2.5 text-sm cursor-pointer transition-colors select-none flex items-center justify-between gap-3 ${
                 value === opt.value
-                  ? "bg-cyan-500/10 text-cyan-400"
-                  : "text-neutral-300 hover:bg-white/5 hover:text-neutral-100"
+                  ? "bg-cyan-500/10 text-cyan-400 font-semibold"
+                  : "text-neutral-200 hover:bg-white/10 hover:text-white"
               }`}
               onClick={() => {
                 onChange(opt.value);
                 setIsOpen(false);
               }}
             >
-              {opt.label}
+              <span className="truncate">{opt.label}</span>
+              {value === opt.value && <Check className="w-4 h-4 text-cyan-400 shrink-0" />}
             </div>
           ))}
         </div>
@@ -113,6 +153,15 @@ export default function CompaniesGrid({ onCompanyClick }: CompaniesGridProps) {
     const sizes = Array.from(new Set(COMPANIES_META.map((c) => c.size))).sort();
     return sizes.map((size) => ({ label: size, value: size }));
   }, []);
+
+  const hasActiveFilters = Boolean(search || selectedLocation || selectedCategory || selectedSize);
+
+  const handleResetAllFilters = () => {
+    setSearch("");
+    setSelectedLocation("");
+    setSelectedCategory("");
+    setSelectedSize("");
+  };
 
   const filteredCompanies = useMemo(() => {
     return COMPANIES_META.filter((c) => {
@@ -190,6 +239,7 @@ export default function CompaniesGrid({ onCompanyClick }: CompaniesGridProps) {
           onChange={setSelectedCategory}
           options={categoryOptions}
           placeholder="+ Add Category"
+          alignRight={true}
         />
 
         {/* Size Dropdown */}
@@ -198,15 +248,22 @@ export default function CompaniesGrid({ onCompanyClick }: CompaniesGridProps) {
           onChange={setSelectedSize}
           options={sizeOptions}
           placeholder="Any Size"
+          alignRight={true}
         />
 
-        {/* Bookmark / Lock Action Button */}
+        {/* Reset All Filters Button */}
         <button
           type="button"
-          aria-label="Saved filters"
-          className="p-3 bg-[#111827]/50 border border-white/5 rounded-xl text-neutral-400 hover:text-neutral-200 hover:bg-white/10 transition-colors flex items-center justify-center shrink-0 self-stretch sm:self-auto"
+          onClick={handleResetAllFilters}
+          title={hasActiveFilters ? "Reset all filters" : "No active filters"}
+          aria-label="Reset all filters"
+          className={`p-3 border rounded-xl transition-all flex items-center justify-center shrink-0 self-stretch sm:self-auto cursor-pointer ${
+            hasActiveFilters
+              ? "bg-rose-950/40 border-rose-500/30 text-rose-400 hover:bg-rose-900/50 hover:text-rose-200"
+              : "bg-[#111827]/50 border-white/5 text-neutral-500 hover:text-neutral-300 hover:bg-white/10"
+          }`}
         >
-          <Lock className="w-4 h-4" />
+          <RotateCcw className="w-4 h-4" />
         </button>
       </div>
 
