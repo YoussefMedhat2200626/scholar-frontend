@@ -6,9 +6,24 @@ import CompanyModal from './components/CompanyModal';
 import MapFilterModal from './components/MapFilterModal';
 import CompaniesGrid from './components/CompaniesGrid';
 import { CompanyMeta, COMPANIES_META } from '@/src/data/companies';
-import { Search, ChevronDown, User, Briefcase, Code, Globe, AlertCircle, Map, ChevronUp, Check } from 'lucide-react';
+import { Search, ChevronDown, User, Briefcase, Code, Globe, AlertCircle, Map, ChevronUp, Check, MapPin } from 'lucide-react';
 
 const getCompanyColor = (companyName: string) => {
+  if (!companyName) return 'bg-emerald-600';
+  const lower = companyName.toLowerCase();
+  if (lower.includes('siemens')) return 'bg-emerald-600';
+  if (lower.includes('capgemini')) return 'bg-emerald-600';
+  if (lower.includes('valeo')) return 'bg-emerald-600';
+  if (lower.includes('cisco')) return 'bg-slate-700';
+  if (lower.includes('vodafone')) return 'bg-red-600';
+  if (lower.includes('dell')) return 'bg-blue-600';
+  if (lower.includes('stmicroelectronics') || lower.includes('stmicro')) return 'bg-blue-600';
+  if (lower.includes('intel')) return 'bg-blue-600';
+  if (lower.includes('mediatek')) return 'bg-red-600';
+  if (lower.includes('texas instruments') || lower.includes('ti')) return 'bg-red-600';
+  if (lower.includes('analog devices') || lower.includes('adi')) return 'bg-slate-600';
+  if (lower.includes('infineon')) return 'bg-teal-600';
+
   const colors = [
     'bg-blue-600',
     'bg-cyan-600',
@@ -19,7 +34,6 @@ const getCompanyColor = (companyName: string) => {
     'bg-pink-600',
     'bg-indigo-600'
   ];
-  if (!companyName) return colors[0];
   let hash = 0;
   for (let i = 0; i < companyName.length; i++) {
     hash = companyName.charCodeAt(i) + ((hash << 5) - hash);
@@ -411,7 +425,7 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
   }, [otherCompaniesList, companySearchQuery, selectedCompaniesFilter]);
 
   return (
-    <div className="h-screen bg-[#09111e] font-main tracking-eyebrow pt-32 pb-12 px-4 sm:px-6 lg:px-12 relative overflow-hidden flex flex-col">
+    <div className="min-h-screen bg-[#09111e] font-main tracking-eyebrow pt-32 pb-12 px-4 sm:px-6 lg:px-12 relative flex flex-col">
       
       {/* Background Glows matching Figma */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
@@ -440,209 +454,209 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
           <CompaniesGrid onCompanyClick={setSelectedCompanyModal} />
         ) : (
           <>
-            {/* Title */}
-            <h1 className="text-4xl sm:text-5xl font-extrabold text-white mb-8 tracking-wide uppercase shrink-0">
-              Global Career Map
-            </h1>
-            {/* Filter Bar */}
-        <div className="flex flex-col lg:flex-row gap-4 mb-12 bg-[#1a2332]/80 backdrop-blur-md p-2 rounded-2xl border border-white/5 shadow-lg relative z-50 shrink-0">
-          
-          {/* Select Countries Button */}
-          <button 
-            onClick={() => setIsMapModalOpen(true)}
-            className="flex items-center gap-2 bg-[#111827]/50 border border-white/5 text-neutral-200 text-sm rounded-xl py-3.5 px-5 hover:bg-white/10 transition-colors shrink-0 whitespace-nowrap lg:max-w-[200px]"
-          >
-            <Map className="w-4 h-4 text-neutral-400 shrink-0" />
-            <span className="truncate">Select Countries ({selectedCountries.length})</span>
-          </button>
-
-          {/* Search Input */}
-          <div className="relative flex-1">
-            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none z-10">
-              <Search className="h-4 w-4 text-neutral-400" />
-            </div>
-            <input
-              type="text"
-              className="w-full bg-[#111827]/50 border border-white/5 text-neutral-200 text-sm rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-white/20 placeholder-neutral-500"
-              placeholder="Search position, stack..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-
-          {/* Disciplines Dropdown */}
-          <CustomSelect
-            value={selectedDiscipline}
-            onChange={setSelectedDiscipline}
-            placeholder="All Disciplines"
-            options={uniqueDisciplines.map(d => ({ label: d, value: d }))}
-            searchable
-          />
-
-          
-          
-        </div>
-
-        {serverError && (
-          <div className="max-w-2xl mx-auto bg-red-500/10 border border-red-500/30 rounded-xl p-6 text-center mb-8">
-            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-red-400">Database Connection Error</h3>
-            <p className="text-red-300 mt-2">{serverError}</p>
-          </div>
-        )}
-
-        {/* Sidebar + Main Content Layout */}
-        <div className="flex flex-col lg:flex-row gap-8 flex-1 min-h-0">
-          
-          {/* Left Sidebar - Brands/Companies Filter */}
-          <aside className="w-full lg:w-64 shrink-0 flex flex-col gap-4">
-            <div className="bg-[#1a2332]/80 backdrop-blur-md rounded-2xl border border-white/5 p-4 shadow-lg flex flex-col h-full max-h-full min-h-0">
-              <div className="flex items-center justify-between mb-3 shrink-0">
-                <h3 className="text-lg font-bold text-white tracking-wide uppercase">Brand</h3>
-                <ChevronUp className="w-4 h-4 text-neutral-400" />
+            {/* Hero Section */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 shrink-0">
+              <div>
+                <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-wide uppercase">
+                  Global Career Map
+                </h1>
+                <p className="text-neutral-400 mt-2 text-base sm:text-lg">
+                  Discover your next career move across the global semiconductor and tech landscape.
+                </p>
               </div>
-              
-              {/* Search Companies */}
-              <div className="relative mb-3">
-                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none z-10">
+
+              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-emerald-400 text-xs font-semibold shrink-0 self-start sm:self-center">
+                <Briefcase className="w-3.5 h-3.5" />
+                <span>{filteredJobs.length} Openings</span>
+              </div>
+            </div>
+
+            {/* Filter Bar */}
+            <div className="flex flex-col lg:flex-row gap-4 mb-8 bg-[#1a2332]/80 backdrop-blur-md p-2 rounded-2xl border border-white/5 shadow-lg relative z-50 shrink-0">
+              {/* Select Countries Button */}
+              <button 
+                onClick={() => setIsMapModalOpen(true)}
+                className="flex items-center gap-2 bg-[#111827]/50 border border-white/5 text-neutral-200 text-sm rounded-xl py-3.5 px-5 hover:bg-white/10 transition-colors shrink-0 whitespace-nowrap lg:max-w-[200px]"
+              >
+                <Map className="w-4 h-4 text-neutral-400 shrink-0" />
+                <span className="truncate">Select Countries ({selectedCountries.length})</span>
+              </button>
+
+              {/* Search Input */}
+              <div className="relative flex-1">
+                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none z-10">
                   <Search className="h-4 w-4 text-neutral-400" />
                 </div>
                 <input
                   type="text"
-                  className="w-full bg-[#111827]/50 border border-white/5 text-neutral-200 text-sm rounded-lg py-2 pl-9 pr-3 focus:outline-none focus:border-white/20 placeholder-neutral-500"
-                  placeholder="Search"
-                  value={companySearchQuery}
-                  onChange={(e) => setCompanySearchQuery(e.target.value)}
+                  className="w-full bg-[#111827]/50 border border-white/5 text-neutral-200 text-sm rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-white/20 placeholder-neutral-500"
+                  placeholder="Search position, stack..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
 
-              {/* Company Checkboxes */}
-              <div className="flex flex-col gap-1.5 flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-0">
-                {filteredMainCompanies.map(company => (
-                  <label key={company} onClick={() => handleToggleCompany(company)} className="flex items-center gap-3 cursor-pointer group">
-                    <div className={`w-5 h-5 rounded flex items-center justify-center border transition-all ${selectedCompaniesFilter.includes(company) ? 'bg-[#70B5DF] border-[#70B5DF]' : 'bg-[#111827]/50 border-white/10 group-hover:border-white/30'}`}>
-                      {selectedCompaniesFilter.includes(company) && <Check className="w-3.5 h-3.5 text-[#0a0f18] font-bold" />}
-                    </div>
-                    <span className="text-sm text-neutral-300 group-hover:text-white transition-colors truncate">{company}</span>
-                  </label>
-                ))}
-
-                {showAllCompanies && filteredOtherCompanies.map(company => (
-                  <label key={company} onClick={() => handleToggleCompany(company)} className="flex items-center gap-3 cursor-pointer group">
-                    <div className={`w-5 h-5 rounded flex items-center justify-center border transition-all ${selectedCompaniesFilter.includes(company) ? 'bg-[#70B5DF] border-[#70B5DF]' : 'bg-[#111827]/50 border-white/10 group-hover:border-white/30'}`}>
-                      {selectedCompaniesFilter.includes(company) && <Check className="w-3.5 h-3.5 text-[#0a0f18] font-bold" />}
-                    </div>
-                    <span className="text-sm text-neutral-400 group-hover:text-neutral-200 transition-colors truncate">{company}</span>
-                  </label>
-                ))}
-              </div>
-
-              {/* Show All Toggle */}
-              {(otherCompaniesList.length > 0 || (companySearchQuery && filteredOtherCompanies.length > 0)) && (
-                <button
-                  onClick={() => setShowAllCompanies(!showAllCompanies)}
-                  className="mt-4 text-sm font-semibold text-[#70B5DF] hover:text-[#5da0c9] transition-colors w-full text-left"
-                >
-                  {showAllCompanies ? "See Less" : "See All"}
-                </button>
-              )}
+              {/* Disciplines Dropdown */}
+              <CustomSelect
+                value={selectedDiscipline}
+                onChange={setSelectedDiscipline}
+                placeholder="All Disciplines"
+                options={uniqueDisciplines.map(d => ({ label: d, value: d }))}
+                searchable
+              />
             </div>
-          </aside>
 
-          {/* Main Content - Jobs Grid */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar pb-12 pr-2">
-            {filteredJobs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 bg-[#1a2332]/50 rounded-2xl border border-white/5">
-                <AlertCircle className="w-12 h-12 text-neutral-500 mb-4" />
-                <h3 className="text-xl font-bold text-white mb-2">No jobs found</h3>
-                <p className="text-neutral-400">Try adjusting your filters or search query.</p>
+            {serverError && (
+              <div className="max-w-2xl mx-auto bg-red-500/10 border border-red-500/30 rounded-xl p-6 text-center mb-8">
+                <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                <h3 className="text-lg font-bold text-red-400">Database Connection Error</h3>
+                <p className="text-red-300 mt-2">{serverError}</p>
               </div>
-            ) : (
-              <div className="grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 relative z-10">
-                {filteredJobs.map((job: JobData) => {
-            
-            let parsedTags = [];
-            try {
-                parsedTags = typeof job.tags_json === 'string' ? JSON.parse(job.tags_json) : (job.tags_json || []);
-            } catch {}
-            
-            // Extract some mockup tags for display matching Figma
-            const seniority = parsedTags.find((t: string) => t.toLowerCase().includes('senior') || t.toLowerCase().includes('junior') || t.toLowerCase().includes('mid')) || 'Mid-Level';
-            const discipline = parsedTags.filter((t: string) => !t.toLowerCase().includes('senior') && !t.toLowerCase().includes('junior') && !t.toLowerCase().includes('mid') && !t.toLowerCase().includes('remote') && !t.toLowerCase().includes('hybrid') && !t.toLowerCase().includes('on-site') && !t.toLowerCase().includes('full-time') && !t.toLowerCase().includes('part-time')).slice(0, 3).join(', ') || 'Engineering';
-            const locationShort = (job.location?.includes('Egypt') || job.location?.includes('Cairo')) ? 'EG' : 'Remote';
-            const dateFormatted = job.first_seen_at ? new Date(job.first_seen_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recently';
-            
-            return (
-              <div 
-                key={job.id} 
-                onClick={() => setSelectedJob(job)}
-                className="bg-[#151c2c]/80 backdrop-blur-sm border border-white/5 hover:border-[#70B5DF] hover:[box-shadow:0px_0px_15px_rgba(112,181,223,0.3)] hover:bg-[#1a2336] transition-all duration-300 cursor-pointer rounded-2xl p-6 flex flex-col relative group"
-              >
-                {/* Top Row: Logo and EG Badge */}
-                <div className="flex items-start justify-between mb-5">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold text-white shadow-sm ${getCompanyColor(job.company || '')}`}>
-                    {job.company ? job.company.charAt(0).toUpperCase() : 'C'}
-                  </div>
-                  
-                  <div className="flex flex-col items-end gap-1">
-                    <div className="px-2.5 py-1 rounded bg-white/5 border border-white/10 text-neutral-300 text-xs font-bold tracking-wider">
-                      EG
-                    </div>
-                    <span className="text-[10px] text-neutral-500 font-bold">{dateFormatted}</span>
-                  </div>
-                </div>
-
-                {/* Title and Company */}
-                <h3 className="text-white font-bold text-[17px] leading-snug mb-1.5 line-clamp-2">
-                  {job.title}
-                </h3>
-                <p className="text-neutral-400 text-sm mb-6">
-                  {job.company || 'Unknown Company'}
-                </p>
-
-                {/* Bottom Section: Tags and Apply Button */}
-                <div className="mt-auto flex items-end justify-between gap-4 pt-4">
-                  <div className="flex flex-wrap gap-2">
-                  
-                  {/* Seniority */}
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
-                    <User className="w-3.5 h-3.5" />
-                    <span className="text-[11px] font-bold">{seniority}</span>
-                  </div>
-                  
-                  {/* Job Type */}
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-                    <Briefcase className="w-3.5 h-3.5" />
-                    <span className="text-[11px] font-bold">{job.job_type || 'Full-time'}</span>
-                  </div>
-                  
-                  {/* Discipline / Tags */}
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 max-w-[200px]">
-                    <Code className="w-3.5 h-3.5 flex-shrink-0" />
-                    <span className="text-[11px] font-bold truncate">{discipline}</span>
-                  </div>
-                  
-                  {/* Location Code */}
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400">
-                    <Globe className="w-3.5 h-3.5 flex-shrink-0" />
-                    <span className="text-[11px] font-bold">{locationShort}</span>
-                  </div>
-                </div>
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); window.open(job.url, '_blank'); }}
-                    className="shrink-0 bg-[#70B5DF]/10 hover:bg-[#70B5DF]/20 hover:[box-shadow:0px_0px_10px_#70B5DF] border border-[#70B5DF]/50 text-[#70B5DF] px-5 py-2 rounded-xl font-bold text-sm transition-all duration-300"
-                  >
-                    Apply
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
             )}
-          </div>
-        </div>
-        </>
+
+            {/* Sidebar + Main Content Layout */}
+            <div className="flex flex-col lg:flex-row gap-8 items-start flex-1 min-h-0">
+              
+              {/* Left Sidebar - Brands/Companies Filter */}
+              <aside className="w-full lg:w-64 shrink-0 flex flex-col gap-4 lg:sticky lg:top-28">
+                <div className="bg-[#1a2332]/80 backdrop-blur-md rounded-2xl border border-white/5 p-4 shadow-lg flex flex-col max-h-[600px]">
+                  <div className="flex items-center justify-between mb-3 shrink-0">
+                    <h3 className="text-lg font-bold text-white tracking-wide uppercase">Brand</h3>
+                    <ChevronUp className="w-4 h-4 text-neutral-400" />
+                  </div>
+                  
+                  {/* Search Companies */}
+                  <div className="relative mb-3 shrink-0">
+                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none z-10">
+                      <Search className="h-4 w-4 text-neutral-400" />
+                    </div>
+                    <input
+                      type="text"
+                      className="w-full bg-[#111827]/50 border border-white/5 text-neutral-200 text-sm rounded-lg py-2 pl-9 pr-3 focus:outline-none focus:border-white/20 placeholder-neutral-500"
+                      placeholder="Search"
+                      value={companySearchQuery}
+                      onChange={(e) => setCompanySearchQuery(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Company Checkboxes */}
+                  <div className="flex flex-col gap-1.5 flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-0">
+                    {filteredMainCompanies.map(company => (
+                      <label key={company} onClick={() => handleToggleCompany(company)} className="flex items-center gap-3 cursor-pointer group">
+                        <div className={`w-5 h-5 rounded flex items-center justify-center border transition-all ${selectedCompaniesFilter.includes(company) ? 'bg-[#70B5DF] border-[#70B5DF]' : 'bg-[#111827]/50 border-white/10 group-hover:border-white/30'}`}>
+                          {selectedCompaniesFilter.includes(company) && <Check className="w-3.5 h-3.5 text-[#0a0f18] font-bold" />}
+                        </div>
+                        <span className="text-sm text-neutral-300 group-hover:text-white transition-colors truncate">{company}</span>
+                      </label>
+                    ))}
+
+                    {showAllCompanies && filteredOtherCompanies.map(company => (
+                      <label key={company} onClick={() => handleToggleCompany(company)} className="flex items-center gap-3 cursor-pointer group">
+                        <div className={`w-5 h-5 rounded flex items-center justify-center border transition-all ${selectedCompaniesFilter.includes(company) ? 'bg-[#70B5DF] border-[#70B5DF]' : 'bg-[#111827]/50 border-white/10 group-hover:border-white/30'}`}>
+                          {selectedCompaniesFilter.includes(company) && <Check className="w-3.5 h-3.5 text-[#0a0f18] font-bold" />}
+                        </div>
+                        <span className="text-sm text-neutral-400 group-hover:text-neutral-200 transition-colors truncate">{company}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  {/* Show All Toggle */}
+                  {(otherCompaniesList.length > 0 || (companySearchQuery && filteredOtherCompanies.length > 0)) && (
+                    <button
+                      onClick={() => setShowAllCompanies(!showAllCompanies)}
+                      className="mt-4 text-sm font-semibold text-[#70B5DF] hover:text-[#5da0c9] transition-colors w-full text-left shrink-0"
+                    >
+                      {showAllCompanies ? "See Less" : "See All"}
+                    </button>
+                  )}
+                </div>
+              </aside>
+
+              {/* Main Content - Jobs Grid */}
+              <div className="flex-1 w-full pb-12">
+                {filteredJobs.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-20 bg-[#1a2332]/50 rounded-2xl border border-white/5">
+                    <AlertCircle className="w-12 h-12 text-neutral-500 mb-4" />
+                    <h3 className="text-xl font-bold text-white mb-2">No jobs found</h3>
+                    <p className="text-neutral-400">Try adjusting your filters or search query.</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 relative z-10">
+                    {filteredJobs.map((job: JobData) => {
+                      let parsedTags: string[] = [];
+                      try {
+                        parsedTags = typeof job.tags_json === 'string' ? JSON.parse(job.tags_json) : (job.tags_json || []);
+                      } catch {}
+
+                      const seniority = parsedTags.find((t: string) => t.toLowerCase().includes('senior') || t.toLowerCase().includes('junior') || t.toLowerCase().includes('mid') || t.toLowerCase().includes('lead')) || 'Mid-Level';
+                      const discipline = parsedTags.filter((t: string) => !t.toLowerCase().includes('senior') && !t.toLowerCase().includes('junior') && !t.toLowerCase().includes('mid') && !t.toLowerCase().includes('lead') && !t.toLowerCase().includes('remote') && !t.toLowerCase().includes('hybrid') && !t.toLowerCase().includes('on-site') && !t.toLowerCase().includes('full-time') && !t.toLowerCase().includes('part-time')).slice(0, 3).join(', ') || 'Engineering';
+                      const locationShort = (job.location?.includes('Egypt') || job.location?.includes('Cairo')) ? 'EG' : (job.location || 'Remote');
+
+                      const seniorityLower = seniority.toLowerCase();
+                      const isSeniorOrLead = seniorityLower.includes('senior') || seniorityLower.includes('lead') || seniorityLower.includes('principal');
+                      const seniorityColor = isSeniorOrLead
+                        ? 'bg-purple-950/60 border-purple-500/30 text-purple-400'
+                        : 'bg-sky-950/60 border-sky-500/30 text-sky-400';
+
+                      return (
+                        <div 
+                          key={job.id} 
+                          onClick={() => setSelectedJob(job)}
+                          className="bg-[#151c2c]/80 backdrop-blur-sm border border-white/5 hover:border-[#70B5DF] hover:[box-shadow:0px_0px_15px_rgba(112,181,223,0.3)] hover:bg-[#1a2336] transition-all duration-300 cursor-pointer rounded-2xl p-6 flex flex-col relative group"
+                        >
+                          {/* Top Row: Logo and EG Badge */}
+                          <div className="flex items-start justify-between mb-4">
+                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold text-white shadow-sm shrink-0 ${getCompanyColor(job.company || '')}`}>
+                              {job.company ? job.company.charAt(0).toUpperCase() : 'C'}
+                            </div>
+                            
+                            <div className="px-2.5 py-1 rounded bg-white/5 border border-white/10 text-neutral-300 text-xs font-bold tracking-wider">
+                              {locationShort}
+                            </div>
+                          </div>
+
+                          {/* Title and Company */}
+                          <h3 className="text-white font-bold text-[17px] leading-snug mb-1.5 line-clamp-2">
+                            {job.title}
+                          </h3>
+                          <p className="text-neutral-400 text-sm mb-6">
+                            {job.company || 'Unknown Company'}
+                          </p>
+
+                          {/* Badges Section */}
+                          <div className="mt-auto space-y-2.5">
+                            {/* Row 1: Seniority and Employment Type */}
+                            <div className="flex flex-wrap items-center gap-2">
+                              <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-bold ${seniorityColor}`}>
+                                <User className="w-3.5 h-3.5 shrink-0" />
+                                <span>{seniority}</span>
+                              </div>
+                              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/50 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold">
+                                <Briefcase className="w-3.5 h-3.5 shrink-0" />
+                                <span>{job.job_type || 'Full-time'}</span>
+                              </div>
+                            </div>
+
+                            {/* Row 2: Discipline and Location */}
+                            <div className="flex flex-wrap items-center gap-2">
+                              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-950/50 border border-cyan-500/30 text-cyan-400 text-[11px] font-bold max-w-[210px]">
+                                <Code className="w-3.5 h-3.5 shrink-0" />
+                                <span className="truncate">{discipline}</span>
+                              </div>
+                              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-950/50 border border-rose-500/30 text-rose-400 text-[11px] font-bold">
+                                <MapPin className="w-3.5 h-3.5 shrink-0" />
+                                <span>{locationShort}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
         )}
       </div>
       
