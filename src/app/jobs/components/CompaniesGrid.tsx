@@ -2,8 +2,10 @@
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import CompanyCard from "./CompanyCard";
+import FilterSearchInput from "./FilterSearchInput";
+import MapFilterModal from "./MapFilterModal";
 import { CompanyMeta, COMPANIES_META } from "@/src/data/companies";
-import { Search, ChevronDown, MapPin, Briefcase, X, Check, RotateCcw } from "lucide-react";
+import { Search, ChevronDown, MapPin, Briefcase, X, Check, RotateCcw, Map } from "lucide-react";
 
 interface CompaniesGridProps {
   onCompanyClick: (company: CompanyMeta) => void;
@@ -135,9 +137,16 @@ function GridSelect({
 
 export default function CompaniesGrid({ onCompanyClick }: CompaniesGridProps) {
   const [search, setSearch] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState("");
+  const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+
+  const handleToggleCountry = (country: string) => {
+    setSelectedCountries(prev =>
+      prev.includes(country) ? prev.filter(c => c !== country) : [...prev, country]
+    );
+  };
 
   const locationOptions = useMemo(() => {
     const locs = Array.from(new Set(COMPANIES_META.map((c) => c.hq))).sort();
@@ -154,11 +163,11 @@ export default function CompaniesGrid({ onCompanyClick }: CompaniesGridProps) {
     return sizes.map((size) => ({ label: size, value: size }));
   }, []);
 
-  const hasActiveFilters = Boolean(search || selectedLocation || selectedCategory || selectedSize);
+  const hasActiveFilters = Boolean(search || selectedCountries.length > 0 || selectedCategory || selectedSize);
 
   const handleResetAllFilters = () => {
     setSearch("");
-    setSelectedLocation("");
+    setSelectedCountries([]);
     setSelectedCategory("");
     setSelectedSize("");
   };
@@ -175,7 +184,7 @@ export default function CompaniesGrid({ onCompanyClick }: CompaniesGridProps) {
         if (!matchesSearch) return false;
       }
 
-      if (selectedLocation && c.hq.toLowerCase() !== selectedLocation.toLowerCase()) {
+      if (selectedCountries.length > 0 && !selectedCountries.some(country => c.hq.toLowerCase().includes(country.toLowerCase()))) {
         return false;
       }
 
@@ -189,7 +198,7 @@ export default function CompaniesGrid({ onCompanyClick }: CompaniesGridProps) {
 
       return true;
     });
-  }, [search, selectedLocation, selectedCategory, selectedSize]);
+  }, [search, selectedCountries, selectedCategory, selectedSize]);
 
   return (
     <div className="w-full">
@@ -212,26 +221,21 @@ export default function CompaniesGrid({ onCompanyClick }: CompaniesGridProps) {
 
       {/* Filter Bar */}
       <div className="flex flex-col lg:flex-row gap-3 mb-8 bg-[#1a2332]/80 backdrop-blur-md p-2 rounded-2xl border border-white/5 shadow-lg relative z-50">
-        {/* Location Dropdown */}
-        <GridSelect
-          value={selectedLocation}
-          onChange={setSelectedLocation}
-          options={locationOptions}
-          placeholder="Location"
-          icon={MapPin}
-        />
+        {/* Select Countries Button (Map Picker) */}
+        <button
+          onClick={() => setIsMapModalOpen(true)}
+          className="flex items-center gap-2 bg-[#111827]/50 border border-white/5 text-neutral-200 text-sm rounded-xl py-3.5 px-5 hover:bg-white/10 transition-colors shrink-0 whitespace-nowrap lg:max-w-[200px]"
+        >
+          <Map className="w-4 h-4 text-neutral-400 shrink-0" />
+          <span className="truncate">Select Countries ({selectedCountries.length})</span>
+        </button>
 
         {/* Search Input */}
-        <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
-          <input
-            type="text"
-            placeholder="Search name or industry..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-[#111827]/50 border border-white/5 text-neutral-200 text-sm rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:border-white/20 placeholder-neutral-500 transition-colors"
-          />
-        </div>
+        <FilterSearchInput
+          placeholder="Search name or industry..."
+          value={search}
+          onChange={setSearch}
+        />
 
         {/* Category Dropdown */}
         <GridSelect
@@ -283,6 +287,14 @@ export default function CompaniesGrid({ onCompanyClick }: CompaniesGridProps) {
           <p className="text-neutral-400 text-lg">No companies found matching your search or filters.</p>
         </div>
       )}
+
+      <MapFilterModal
+        isOpen={isMapModalOpen}
+        onClose={() => setIsMapModalOpen(false)}
+        selectedCountries={selectedCountries}
+        onToggleCountry={handleToggleCountry}
+        onConfirm={() => setIsMapModalOpen(false)}
+      />
     </div>
   );
 }

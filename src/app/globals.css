@@ -51,7 +51,7 @@
 
 /* Light theme colors (default)
 
-    Primary Colors
+ Primary Colors 
 --color-primary-100: #ddedfd;
 --color-primary-200: #b5d6f5;
 --color-primary-300: #70b5df;
@@ -61,7 +61,7 @@
 --color-primary-700: #0e4880;
 --color-primary-error: #ff8a81;
 
-    Neutral Colors
+ Neutral Colors 
 --color-white-surface: #fefefe;
 --color-neutral-50: #ecf0f1;
 --color-neutral-100: #dde3e5;
@@ -74,7 +74,7 @@
 --color-neutral-800: #1a4a6e;
 --color-neutral-900: #0a3055;
 
-    Accent Colors
+ Accent Colors 
 --color-accent-100: #e6e9ff;
 --color-accent-200: #c5caf0;
 --color-accent-300: #7986cc;
@@ -82,12 +82,51 @@
 --color-accent-600: #48579e;
 --color-accent-700: #3a4580;
 
-    Original colors
+ Original colors 
 --background: #ffffff;
 --foreground: #171717;
 */
 
 :root {
+  /* Dark theme colors */
+  /* Primary Colors */
+  --color-primary-100: #dff3ff;
+  --color-primary-200: #a8d3ed;
+  --color-primary-300: #70b5df;
+  --color-primary-400: #3a90c9;
+  --color-primary-500: #2574a9;
+  --color-primary-600: #1d5c87;
+  --color-primary-700: #154669;
+  --color-primary-error: #ff8a81;
+
+  /* Neutral Colors */
+  --color-white-surface: #fefefe;
+  --color-neutral-50: #ecf0f1;
+  --color-neutral-100: #bdc3c7;
+  --color-neutral-200: #8fabb8;
+  --color-neutral-300: #6b8d9c;
+  --color-neutral-400: #4d6e7c;
+  --color-neutral-500: #34515e;
+  --color-neutral-600: #163f5a;
+  --color-neutral-700: #0f3249;
+  --color-neutral-800: #0a2539;
+  --color-neutral-900: #05182a;
+
+  /* Accent Colors */
+  --color-accent-100: #dbfffc;
+  --color-accent-200: #b9f1ec;
+  --color-accent-300: #7dd3cb;
+  --color-accent-400: #37b5aa;
+  --color-accent-600: #0e9488;
+  --color-accent-700: #0b756b;
+
+  /* Original colors */
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
     /* Dark theme colors */
     /* Primary Colors */
     --color-primary-100: #dff3ff;
@@ -131,7 +170,7 @@
     /* Original colors */
     --background: var(--color-neutral-900);
     --foreground: #ededed;
-}
+}}
 
 @media (prefers-color-scheme: dark) {
     :root {
@@ -179,6 +218,11 @@
         --background: var(--color-neutral-900);
         --foreground: #ededed;
     }
+}
+
+html {
+    /* Clears the 86px fixed header, which Next skips when picking a scroll target. */
+    scroll-padding-top: 6rem;
 }
 
 body {
@@ -234,20 +278,4 @@ body {
 
 .globe-animation {
   animation: globe-spin 4s ease-in-out infinite;
-}
-
-/* Custom Scrollbar */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #344767;
-  border-radius: 10px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #70B5DF;
 }

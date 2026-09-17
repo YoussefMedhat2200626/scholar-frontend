@@ -5,8 +5,9 @@ import JobModal from './components/JobModal';
 import CompanyModal from './components/CompanyModal';
 import MapFilterModal from './components/MapFilterModal';
 import CompaniesGrid from './components/CompaniesGrid';
+import FilterSearchInput from './components/FilterSearchInput';
 import { CompanyMeta, COMPANIES_META } from '@/src/data/companies';
-import { Search, ChevronDown, User, Briefcase, Code, Globe, AlertCircle, Map, ChevronUp, Check, MapPin } from 'lucide-react';
+import { Search, ChevronDown, User, Briefcase, Code, Globe, AlertCircle, Map, ChevronUp, Check, MapPin, RotateCcw } from 'lucide-react';
 
 const getCompanyColor = (companyName: string) => {
   if (!companyName) return 'bg-emerald-600';
@@ -194,6 +195,16 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
     setSelectedCountries(prev => 
       prev.includes(country) ? prev.filter(c => c !== country) : [...prev, country]
     );
+  };
+
+  const hasActiveFilters = Boolean(searchQuery || selectedDiscipline || selectedCountries.length > 0 || selectedCompaniesFilter.length > 0);
+
+  const handleResetAllFilters = () => {
+    setSearchQuery('');
+    setSelectedDiscipline('');
+    setSelectedCountries([]);
+    setSelectedCompaniesFilter([]);
+    setCompanySearchQuery('');
   };
 
 
@@ -458,7 +469,7 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 shrink-0">
               <div>
                 <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-wide uppercase">
-                  Global Career Map
+                  Career Explorer
                 </h1>
                 <p className="text-neutral-400 mt-2 text-base sm:text-lg">
                   Discover your next career move across the global semiconductor and tech landscape.
@@ -483,18 +494,11 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
               </button>
 
               {/* Search Input */}
-              <div className="relative flex-1">
-                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none z-10">
-                  <Search className="h-4 w-4 text-neutral-400" />
-                </div>
-                <input
-                  type="text"
-                  className="w-full bg-[#111827]/50 border border-white/5 text-neutral-200 text-sm rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-white/20 placeholder-neutral-500"
-                  placeholder="Search position, stack..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
+              <FilterSearchInput
+                placeholder="Search position, stack..."
+                value={searchQuery}
+                onChange={setSearchQuery}
+              />
 
               {/* Disciplines Dropdown */}
               <CustomSelect
@@ -504,6 +508,21 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
                 options={uniqueDisciplines.map(d => ({ label: d, value: d }))}
                 searchable
               />
+
+              {/* Reset All Filters Button */}
+              <button
+                type="button"
+                onClick={handleResetAllFilters}
+                title={hasActiveFilters ? "Reset all filters" : "No active filters"}
+                aria-label="Reset all filters"
+                className={`p-3 border rounded-xl transition-all flex items-center justify-center shrink-0 self-stretch sm:self-auto cursor-pointer ${
+                  hasActiveFilters
+                    ? "bg-rose-950/40 border-rose-500/30 text-rose-400 hover:bg-rose-900/50 hover:text-rose-200"
+                    : "bg-[#111827]/50 border-white/5 text-neutral-500 hover:text-neutral-300 hover:bg-white/10"
+                }`}
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
             </div>
 
             {serverError && (
