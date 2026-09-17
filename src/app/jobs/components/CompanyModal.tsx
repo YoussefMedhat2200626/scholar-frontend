@@ -5,6 +5,7 @@ import { X, Users, MapPin, Globe, Briefcase } from "lucide-react";
 import { FaLinkedin } from "react-icons/fa";
 import { CompanyMeta } from "@/src/data/companies";
 import { JobData } from "./JobModal";
+import { useTheme } from "@/src/hooks/useTheme";
 import {
   LineChart,
   Line,
@@ -78,6 +79,9 @@ export default function CompanyModal({ company, isOpen, onClose, jobs }: Company
       .sort((a, b) => a.date.localeCompare(b.date));
   }, [companyJobs]);
 
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
   if (!isOpen && !isVisible) return null;
   if (!company) return null;
 
@@ -85,14 +89,14 @@ export default function CompanyModal({ company, isOpen, onClose, jobs }: Company
     <div
       className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0"}`}
     >
-      <div className="absolute inset-0 bg-[#0a0f18]/80 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-neutral-900/40 dark:bg-neutral-900/80 backdrop-blur-sm" onClick={onClose} />
 
       <div
-        className={`relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-[#151c2c] border border-white/10 rounded-2xl shadow-2xl transition-all duration-300 ${isOpen ? "scale-100 translate-y-0" : "scale-95 translate-y-4"}`}
+        className={`relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-neutral-700 border border-neutral-200 dark:border-white/10 rounded-2xl shadow-2xl transition-all duration-300 ${isOpen ? "scale-100 translate-y-0" : "scale-95 translate-y-4"}`}
       >
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-neutral-400 hover:text-white hover:bg-white/10 rounded-full transition-colors z-10"
+          className="absolute top-4 right-4 p-2 text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 rounded-full transition-colors z-10 cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
@@ -103,31 +107,31 @@ export default function CompanyModal({ company, isOpen, onClose, jobs }: Company
               {company.shortName}
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white mb-1 leading-tight">{company.name}</h2>
-              <p className="text-neutral-400">{company.industry} • {company.size}</p>
+              <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-1 leading-tight">{company.name}</h2>
+              <p className="text-neutral-600 dark:text-neutral-400">{company.industry} • {company.size}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             {/* Graph Section */}
             <div>
-              <h3 className="text-sm font-bold text-white mb-4">Hiring Timeline (Opened Positions)</h3>
+              <h3 className="text-sm font-bold text-neutral-900 dark:text-white mb-4">Hiring Timeline (Opened Positions)</h3>
               <div className="h-[200px] w-full">
                 {chartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#2a3441" vertical={false} />
-                      <XAxis dataKey="date" stroke="#6b7280" fontSize={12} tickMargin={10} />
-                      <YAxis stroke="#6b7280" fontSize={12} tickFormatter={(tick) => Math.floor(tick).toString()} allowDecimals={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#2a3441" : "#e2e8f0"} vertical={false} />
+                      <XAxis dataKey="date" stroke={isDark ? "#6b7280" : "#94a3b8"} fontSize={12} tickMargin={10} />
+                      <YAxis stroke={isDark ? "#6b7280" : "#94a3b8"} fontSize={12} tickFormatter={(tick) => Math.floor(tick).toString()} allowDecimals={false} />
                       <Tooltip
-                        contentStyle={{ backgroundColor: "#1a2336", borderColor: "#2a3441", borderRadius: "8px", color: "#fff" }}
+                        contentStyle={{ backgroundColor: isDark ? "#1a2336" : "#ffffff", borderColor: isDark ? "#2a3441" : "#e2e8f0", borderRadius: "8px", color: isDark ? "#fff" : "#0f172a" }}
                         itemStyle={{ color: "#70B5DF" }}
                       />
-                      <Line type="monotone" dataKey="count" name="Jobs" stroke="#70B5DF" strokeWidth={2} dot={{ r: 4, fill: "#70B5DF", strokeWidth: 2, stroke: "#151c2c" }} activeDot={{ r: 6 }} />
+                      <Line type="monotone" dataKey="count" name="Jobs" stroke="#70B5DF" strokeWidth={2} dot={{ r: 4, fill: "#70B5DF", strokeWidth: 2, stroke: isDark ? "#151c2c" : "#ffffff" }} activeDot={{ r: 6 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center border border-white/5 rounded-xl">
+                  <div className="w-full h-full flex items-center justify-center border border-neutral-200 dark:border-white/5 rounded-xl">
                     <p className="text-neutral-500 text-sm">No timeline data available.</p>
                   </div>
                 )}
@@ -136,19 +140,19 @@ export default function CompanyModal({ company, isOpen, onClose, jobs }: Company
 
             {/* Latest Positions Section */}
             <div>
-              <h3 className="text-sm font-bold text-white mb-4">Latest Positions</h3>
+              <h3 className="text-sm font-bold text-neutral-900 dark:text-white mb-4">Latest Positions</h3>
               <div className="space-y-3 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
                 {companyJobs.length > 0 ? (
                   companyJobs.slice(0, 5).map((job) => (
-                    <div key={job.id} className="bg-white/5 border border-white/5 rounded-xl p-3 hover:bg-white/10 transition-colors">
+                    <div key={job.id} className="bg-neutral-50 dark:bg-white/5 border border-neutral-200 dark:border-white/5 rounded-xl p-3 hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors">
                       <a href={job.url} target="_blank" rel="noreferrer" className="flex justify-between items-start group">
                         <div>
-                          <h4 className="text-sm font-bold text-white group-hover:text-[#70B5DF] transition-colors line-clamp-1">{job.title}</h4>
-                          <p className="text-xs text-neutral-400 mt-1">
+                          <h4 className="text-sm font-bold text-neutral-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-[#70B5DF] transition-colors line-clamp-1">{job.title}</h4>
+                          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
                             {job.first_seen_at ? new Date(job.first_seen_at).toISOString().split('T')[0] : "Recently"} • {job.job_type || "Full-time"}
                           </p>
                         </div>
-                        <Briefcase className="w-4 h-4 text-neutral-500 group-hover:text-[#70B5DF] shrink-0 ml-2" />
+                        <Briefcase className="w-4 h-4 text-neutral-400 group-hover:text-primary-600 dark:group-hover:text-[#70B5DF] shrink-0 ml-2" />
                       </a>
                     </div>
                   ))
@@ -159,16 +163,16 @@ export default function CompanyModal({ company, isOpen, onClose, jobs }: Company
             </div>
           </div>
 
-          <div className="bg-[#1a2336] rounded-xl p-5 mb-8">
-            <h3 className="text-sm font-bold text-white mb-2">About</h3>
-            <p className="text-neutral-300 text-sm leading-relaxed">{company.description}</p>
+          <div className="bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-transparent rounded-xl p-5 mb-8">
+            <h3 className="text-sm font-bold text-neutral-900 dark:text-white mb-2">About</h3>
+            <p className="text-neutral-700 dark:text-neutral-300 text-sm leading-relaxed">{company.description}</p>
           </div>
 
           <div className="mb-8">
-            <h3 className="text-sm font-bold text-white mb-3">Global Presence</h3>
+            <h3 className="text-sm font-bold text-neutral-900 dark:text-white mb-3">Global Presence</h3>
             <div className="flex flex-wrap gap-2">
               {company.globalPresence.map((loc, i) => (
-                <div key={i} className="inline-flex items-center px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-neutral-300 text-sm">
+                <div key={i} className="inline-flex items-center px-3 py-1.5 rounded-lg bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10 text-neutral-700 dark:text-neutral-300 text-sm">
                   {loc}
                 </div>
               ))}
