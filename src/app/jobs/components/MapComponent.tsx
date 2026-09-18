@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import worldGeoJSON from "@/src/data/world.geo.json";
 import { GeoJsonObject } from "geojson";
+import { useTheme } from "@/src/hooks/useTheme";
 
 interface MapComponentProps {
   selectedCountries: string[];
@@ -12,16 +13,21 @@ interface MapComponentProps {
 }
 
 export default function MapComponent({ selectedCountries, onToggleCountry }: MapComponentProps) {
-  // Leaflet requires window, we know this component is loaded dynamically so it's safe.
-  
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
+  const tileUrl = isDark
+    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+    : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+
   const geoJsonStyle = (feature: any) => {
     const isSelected = selectedCountries.includes(feature.properties.name);
     return {
-      fillColor: isSelected ? "#70B5DF" : "#1a2336",
+      fillColor: isSelected ? "#70B5DF" : isDark ? "#1a2336" : "#e2e8f0",
       weight: 1,
       opacity: 1,
-      color: "#2a3441",
-      fillOpacity: isSelected ? 0.6 : 0.8,
+      color: isDark ? "#2a3441" : "#cbd5e1",
+      fillOpacity: isSelected ? 0.7 : 0.85,
     };
   };
 
@@ -30,7 +36,9 @@ export default function MapComponent({ selectedCountries, onToggleCountry }: Map
     
     // Bind a simple tooltip on hover
     layer.bindTooltip(countryName, {
-      className: "bg-[#151c2c] border border-[#2a3441] text-white px-2 py-1 rounded shadow-lg",
+      className: isDark
+        ? "bg-[#151c2c] border border-[#2a3441] text-white px-2 py-1 rounded shadow-lg"
+        : "bg-white border border-neutral-200 text-neutral-900 px-2 py-1 rounded shadow-lg",
       direction: "top"
     });
 
@@ -39,7 +47,7 @@ export default function MapComponent({ selectedCountries, onToggleCountry }: Map
         const target = e.target;
         if (!selectedCountries.includes(countryName)) {
           target.setStyle({
-            fillColor: "#3a4a5e",
+            fillColor: isDark ? "#3a4a5e" : "#cbd5e1",
             fillOpacity: 0.9,
           });
         }
@@ -48,8 +56,8 @@ export default function MapComponent({ selectedCountries, onToggleCountry }: Map
         const target = e.target;
         if (!selectedCountries.includes(countryName)) {
           target.setStyle({
-            fillColor: "#1a2336",
-            fillOpacity: 0.8,
+            fillColor: isDark ? "#1a2336" : "#e2e8f0",
+            fillOpacity: isDark ? 0.8 : 0.85,
           });
         }
       },
@@ -60,19 +68,21 @@ export default function MapComponent({ selectedCountries, onToggleCountry }: Map
   };
 
   return (
-    <div className="h-full w-full rounded-2xl overflow-hidden shadow-[0_0_20px_rgba(112,181,223,0.1)] border border-white/10">
+    <div className="h-full w-full rounded-2xl overflow-hidden shadow-[0_0_20px_rgba(112,181,223,0.1)] border border-neutral-200 dark:border-white/10 transition-colors">
       <MapContainer
         center={[26, 30]} // Focus roughly on Egypt
         zoom={3}
-        style={{ height: "100%", width: "100%", background: "#0a0f18" }}
+        style={{ height: "100%", width: "100%", background: isDark ? "#0a0f18" : "#f1f5f9" }}
         maxBounds={[[-90, -180], [90, 180]]}
         maxBoundsViscosity={1.0}
       >
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          key={`tile-${theme}`}
+          url={tileUrl}
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
         <GeoJSON 
+          key={`geojson-${theme}`}
           data={worldGeoJSON as GeoJsonObject} 
           style={geoJsonStyle}
           onEachFeature={onEachFeature}
