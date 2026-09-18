@@ -16,9 +16,7 @@ export default function MapComponent({ selectedCountries, onToggleCountry }: Map
   const { theme } = useTheme();
   const isDark = theme === "dark";
 
-  const tileUrl = isDark
-    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-    : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+  const tileUrl = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 
   const geoJsonStyle = (feature: any) => {
     const isSelected = selectedCountries.includes(feature.properties.name);
@@ -79,7 +77,8 @@ export default function MapComponent({ selectedCountries, onToggleCountry }: Map
         <TileLayer
           key={`tile-${theme}`}
           url={tileUrl}
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          className={isDark ? "dark-map-tiles" : ""}
         />
         <GeoJSON 
           key={`geojson-${theme}`}

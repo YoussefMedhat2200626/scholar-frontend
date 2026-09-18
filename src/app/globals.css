@@ -202,3 +202,8 @@ body {
 .globe-animation {
   animation: globe-spin 4s ease-in-out infinite;
 }
+
+/* Dark mode filter for OSM tiles */
+.dark-map-tiles {
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
