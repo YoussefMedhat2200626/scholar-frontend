@@ -38,6 +38,7 @@ class Job:
     is_remote: bool = False
     original_source: str = ""  # for aggregators like JSearch
     is_taken: bool = False
+    number_visited: int = 0
 
     @property
     def unique_id(self) -> str:

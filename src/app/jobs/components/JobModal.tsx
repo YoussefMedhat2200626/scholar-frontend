@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { X, Briefcase, Globe, Code, User, Clock } from "lucide-react";
+import { X, Briefcase, Globe, Code, User, Clock, MousePointerClick } from "lucide-react";
 
 export interface JobData {
   id: string | number;
@@ -12,6 +12,7 @@ export interface JobData {
   tags_json?: string;
   job_type?: string;
   first_seen_at?: string;
+  number_visited?: number;
 }
 
 interface JobModalProps {
@@ -19,9 +20,10 @@ interface JobModalProps {
   isOpen: boolean;
   onClose: () => void;
   getCompanyColor: (companyName: string) => string;
+  onApply?: (jobId: string | number) => void;
 }
 
-export default function JobModal({ job, isOpen, onClose, getCompanyColor }: JobModalProps) {
+export default function JobModal({ job, isOpen, onClose, getCompanyColor, onApply }: JobModalProps) {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -110,6 +112,10 @@ export default function JobModal({ job, isOpen, onClose, getCompanyColor }: JobM
                   <Globe className="w-4 h-4" />
                   <span>{job.location}</span>
                 </div>
+                <div className="flex items-center gap-1.5 text-[#70B5DF]" title="Number of people who clicked apply">
+                  <MousePointerClick className="w-4 h-4" />
+                  <span>{job.number_visited || 0} visited</span>
+                </div>
               </div>
             </div>
           </div>
@@ -153,11 +159,27 @@ export default function JobModal({ job, isOpen, onClose, getCompanyColor }: JobM
             >
               Cancel
             </button>
+      
             <button
-              onClick={() => { if (job.url) window.open(job.url, "_blank") }}
+              onClick={() => {
+                if (job.url) {
+                  window.open(job.url, "_blank", "noopener,noreferrer");
+                }
+                if (onApply) {
+                  onApply(job.id);
+                }
+              }}
               className="bg-[#70B5DF] hover:bg-[#5da0c9] text-neutral-900 px-8 py-2.5 rounded-xl font-bold transition-all duration-300 shadow-[0_0_15px_rgba(112,181,223,0.3)] hover:shadow-[0_0_20px_rgba(112,181,223,0.5)] cursor-pointer"
+            
             >
-              Apply on LinkedIn
+              {(() => {
+                if (!job.url) return "Apply Now";
+                const lower = job.url.toLowerCase();
+                if (lower.includes("linkedin.com")) return "Apply on LinkedIn";
+                if (lower.includes("whatsapp.com") || lower.includes("wa.me")) return "Apply on WhatsApp";
+                if (lower.includes("wuzzuf.net")) return "Apply on Wuzzuf";
+                return "Apply Now";
+              })()}
             </button>
           </div>
         </div>
