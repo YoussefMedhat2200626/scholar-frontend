@@ -6,7 +6,7 @@ import CompanyModal from './components/CompanyModal';
 import MapFilterModal from './components/MapFilterModal';
 import CompaniesGrid from './components/CompaniesGrid';
 import { CompanyMeta, COMPANIES_META } from '@/src/data/companies';
-import { Search, ChevronDown, User, Briefcase, Code, Globe, AlertCircle, Map, ChevronUp, Check, MapPin } from 'lucide-react';
+import { Search, ChevronDown, User, Briefcase, Code, Globe, AlertCircle, Map, ChevronUp, Check, MapPin, MousePointerClick } from 'lucide-react';
 
 const getCompanyColor = (companyName: string) => {
   if (!companyName) return 'bg-emerald-600';
@@ -50,6 +50,7 @@ interface JobData {
   url?: string;
   job_type?: string;
   first_seen_at?: string;
+  number_visited?: number;
 }
 
 function CustomSelect({
@@ -189,7 +190,36 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
   const [selectedCompanyModal, setSelectedCompanyModal] = useState<CompanyMeta | null>(null);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
-  
+  const [visitCounts, setVisitCounts] = useState<Record<string, number>>({});
+
+  const handleApplyClick = async (jobId: string | number) => {
+    const key = String(jobId);
+    // 1. Optimistic update (+1) for immediate feedback
+    const baseCount = visitCounts[key] ?? initialJobs.find(j => String(j.id) === key)?.number_visited ?? 0;
+    setVisitCounts(prev => ({
+      ...prev,
+      [key]: baseCount + 1,
+    }));
+
+    // 2. Fetch authoritative count from server and sync
+    try {
+      const res = await fetch("/api/jobs/visit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: jobId }),
+      });
+      const data = await res.json();
+      if (data && typeof data.number_visited === "number") {
+        setVisitCounts(prev => ({
+          ...prev,
+          [key]: data.number_visited,
+        }));
+      }
+    } catch (err) {
+      console.error("Failed to sync visit count with server:", err);
+    }
+  };
+
   const handleToggleCountry = (country: string) => {
     setSelectedCountries(prev => 
       prev.includes(country) ? prev.filter(c => c !== country) : [...prev, country]
@@ -637,7 +667,7 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
                               </div>
                             </div>
 
-                            {/* Row 2: Discipline and Location */}
+                            {/* Row 2: Discipline, Location, and Number Visited */}
                             <div className="flex flex-wrap items-center gap-2">
                               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-950/50 border border-cyan-500/30 text-cyan-400 text-[11px] font-bold max-w-[210px]">
                                 <Code className="w-3.5 h-3.5 shrink-0" />
@@ -646,6 +676,13 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
                               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-950/50 border border-rose-500/30 text-rose-400 text-[11px] font-bold">
                                 <MapPin className="w-3.5 h-3.5 shrink-0" />
                                 <span>{locationShort}</span>
+                              </div>
+                              <div 
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#70B5DF]/10 border border-[#70B5DF]/30 text-[#70B5DF] text-[11px] font-bold"
+                                title="Number of people who clicked apply"
+                              >
+                                <MousePointerClick className="w-3.5 h-3.5 shrink-0" />
+                                <span>{visitCounts[String(job.id)] ?? job.number_visited ?? 0} visited</span>
                               </div>
                             </div>
                           </div>
@@ -669,10 +706,11 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
       />
       
       <JobModal 
-        job={selectedJob} 
+        job={selectedJob ? { ...selectedJob, number_visited: visitCounts[String(selectedJob.id)] ?? selectedJob.number_visited ?? 0 } : null} 
         isOpen={!!selectedJob} 
         onClose={() => setSelectedJob(null)} 
         getCompanyColor={getCompanyColor}
+        onApply={handleApplyClick}
       />
       
       <CompanyModal

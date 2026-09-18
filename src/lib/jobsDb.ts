@@ -22,6 +22,7 @@ export interface JobItem {
   last_seen_at?: string;
   last_checked_at?: string;
   is_taken?: boolean;
+  number_visited?: number;
 }
 
 const getJsonDbPath = () => path.join(process.cwd(), 'jobs_export.json');
@@ -117,4 +118,48 @@ export async function markJobAsTaken(id: number | string): Promise<{ success: bo
     [now, id]
   );
   return { success: true, message: 'Job marked as taken in database' };
+}
+
+export async function incrementJobVisits(id: number | string): Promise<{ success: boolean; number_visited: number; notFound?: boolean }> {
+  const numericId = Number(id);
+  if (!Number.isInteger(numericId)) {
+    throw new Error('Invalid Job ID: must be an integer');
+  }
+
+  const isLocalJsonMode = process.env.USE_LOCAL_JSON_DB === 'true';
+
+  if (isLocalJsonMode) {
+    const dbPath = getJsonDbPath();
+    if (!fs.existsSync(dbPath)) {
+      throw new Error('Local JSON database file not found');
+    }
+
+    const rawData = await fs.promises.readFile(dbPath, 'utf-8');
+    const jobs: JobItem[] = JSON.parse(rawData);
+
+    const targetJob = jobs.find((job) => String(job.id) === String(numericId));
+    if (!targetJob) {
+      return { success: false, number_visited: 0, notFound: true };
+    }
+
+    targetJob.number_visited = (targetJob.number_visited || 0) + 1;
+    await fs.promises.writeFile(dbPath, JSON.stringify(jobs, null, 4), 'utf-8');
+
+    return { success: true, number_visited: targetJob.number_visited };
+  }
+
+  const pool = getPool();
+  const { rows } = await pool.query(
+    `UPDATE jobs
+     SET number_visited = COALESCE(number_visited, 0) + 1
+     WHERE id = $1::integer
+     RETURNING number_visited`,
+    [numericId]
+  );
+
+  if (rows.length === 0) {
+    return { success: false, number_visited: 0, notFound: true };
+  }
+
+  return { success: true, number_visited: rows[0].number_visited };
 }
