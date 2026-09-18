@@ -49,6 +49,7 @@ class StoredJob:
     first_seen_at: str
     last_seen_at: str
     last_checked_at: str = ""
+    number_visited: int = 0
 
     def to_job(self) -> Job:
         return Job(
@@ -62,6 +63,7 @@ class StoredJob:
             tags=self.tags,
             is_remote=self.is_remote,
             original_source=self.original_source,
+            number_visited=self.number_visited,
         )
 
 
@@ -203,6 +205,7 @@ def init_db(conn: connection) -> None:
             
             ALTER TABLE jobs ADD COLUMN IF NOT EXISTS is_taken BOOLEAN DEFAULT false;
             ALTER TABLE jobs ADD COLUMN IF NOT EXISTS last_checked_at TEXT;
+            ALTER TABLE jobs ADD COLUMN IF NOT EXISTS number_visited INTEGER DEFAULT 0;
         """)
         
         cur.execute(
@@ -359,7 +362,8 @@ def upsert_job(conn: connection, job: Job) -> tuple[int, bool]:
             "send_status": "pending",
             "first_seen_at": ts,
             "last_seen_at": ts,
-            "is_taken": False
+            "is_taken": False,
+            "number_visited": 0
         }
         jobs_data.insert(0, new_entry)
 
@@ -865,4 +869,5 @@ def _row_to_stored_job(row: dict) -> StoredJob:
         first_seen_at=row.get("first_seen_at", ""),
         last_seen_at=row.get("last_seen_at", ""),
         last_checked_at=row.get("last_checked_at") or "",
+        number_visited=int(row.get("number_visited") or 0),
     )
