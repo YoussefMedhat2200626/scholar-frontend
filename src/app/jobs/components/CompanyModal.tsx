@@ -133,7 +133,7 @@ export default function CompanyModal({ company, isOpen, onClose, jobs, companySt
             </div>
             <div>
               <h2 className="text-2xl font-bold text-neutral-900 dark:text-white mb-1 leading-tight">{company.name}</h2>
-              <p className="text-neutral-600 dark:text-neutral-400">{company.industry} • {company.size}</p>
+              <p className="text-neutral-600 dark:text-neutral-400">{company.industry}</p>
             </div>
           </div>
 

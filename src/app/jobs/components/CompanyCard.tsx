@@ -23,10 +23,7 @@ export default function CompanyCard({ company, onClick }: CompanyCardProps) {
           <div className="px-2.5 py-1 rounded bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10 text-neutral-700 dark:text-neutral-300 text-[10px] font-bold tracking-wider uppercase text-right max-w-[220px] truncate">
             {company.industry}
           </div>
-          <div className="flex items-center gap-1.5 text-neutral-500 dark:text-neutral-400 text-xs">
-            <Users className="w-3.5 h-3.5" />
-            <span>{company.size}</span>
-          </div>
+          
         </div>
       </div>
 

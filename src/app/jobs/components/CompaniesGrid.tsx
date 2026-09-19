@@ -169,7 +169,7 @@ export default function CompaniesGrid({ onCompanyClick }: CompaniesGridProps) {
     setSearch("");
     setSelectedCountries([]);
     setSelectedCategory("");
-    setSelectedSize("");
+    
   };
 
   const filteredCompanies = useMemo(() => {
@@ -246,14 +246,7 @@ export default function CompaniesGrid({ onCompanyClick }: CompaniesGridProps) {
           alignRight={true}
         />
 
-        {/* Size Dropdown */}
-        <GridSelect
-          value={selectedSize}
-          onChange={setSelectedSize}
-          options={sizeOptions}
-          placeholder="Any Size"
-          alignRight={true}
-        />
+        
 
         {/* Reset All Filters Button */}
         <button
