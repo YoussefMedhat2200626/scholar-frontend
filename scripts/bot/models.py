@@ -104,9 +104,16 @@ def _is_remote(job: Job) -> bool:
     return any(p in combined for p in config.REMOTE_PATTERNS)
 
 
+def _is_in_uae(location: str) -> bool:
+    loc = location.lower().strip()
+    return any(p in loc for p in config.UAE_PATTERNS)
+
+def _is_in_usa(location: str) -> bool:
+    loc = location.lower().strip()
+    return any(p in loc for p in config.USA_PATTERNS)
+
 def _is_in_allowed_country(location: str) -> bool:
-    """Check if location is in Egypt or Saudi Arabia."""
-    return _is_in_egypt(location) or _is_in_saudi(location)
+    return _is_in_egypt(location) or _is_in_saudi(location) or _is_in_uae(location) or _is_in_usa(location)
 
 
 def is_programming_job(job: Job) -> bool:

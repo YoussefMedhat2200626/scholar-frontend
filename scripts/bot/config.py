@@ -295,7 +295,7 @@ def get_topic_thread_id(channel_key: str) -> int | None:
     return None
 # ─── Geo-filtering ──────────────────────────────────────────
 # Jobs in these countries pass regardless of remote/onsite
-ALLOWED_ONSITE_COUNTRIES = {"egypt", "مصر", "saudi arabia", "saudi", "ksa", "السعودية"}
+ALLOWED_ONSITE_COUNTRIES = {"egypt", "مصر", "saudi arabia", "saudi", "ksa", "السعودية", "united arab emirates", "uae", "الإمارات", "united states", "us", "usa", "america"}
 
 # Patterns that indicate a location is in Egypt
 EGYPT_PATTERNS = {
@@ -313,6 +313,19 @@ EGYPT_PATTERNS = {
 }
 
 # Patterns that indicate a location is in Saudi Arabia
+
+UAE_PATTERNS = {
+    "united arab emirates", "uae", "الإمارات", "dubai", "دبي",
+    "abu dhabi", "أبوظبي", "sharjah", "الشارقة",
+    "ajman", "عجمان", "ras al khaimah", "رأس الخيمة"
+}
+
+USA_PATTERNS = {
+    "united states", "united states of america", "usa", " us ", " us,",
+    "america", "new york", "california", "texas", "florida", "washington",
+    "seattle", "san francisco", "los angeles", "chicago", "austin", "boston"
+}
+
 SAUDI_PATTERNS = {
     "saudi arabia", "saudi", "ksa", "السعودية", "المملكة العربية السعودية",
     "riyadh", "الرياض", "jeddah", "جدة", "mecca", "مكة",

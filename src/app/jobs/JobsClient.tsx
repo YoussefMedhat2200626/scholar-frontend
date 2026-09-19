@@ -649,7 +649,13 @@ export default function JobsClient({
 
                       const seniority = parsedTags.find((t: string) => t.toLowerCase().includes('senior') || t.toLowerCase().includes('junior') || t.toLowerCase().includes('mid') || t.toLowerCase().includes('lead')) || 'Mid-Level';
                       const discipline = parsedTags.filter((t: string) => !t.toLowerCase().includes('senior') && !t.toLowerCase().includes('junior') && !t.toLowerCase().includes('mid') && !t.toLowerCase().includes('lead') && !t.toLowerCase().includes('remote') && !t.toLowerCase().includes('hybrid') && !t.toLowerCase().includes('on-site') && !t.toLowerCase().includes('full-time') && !t.toLowerCase().includes('part-time')).slice(0, 3).join(', ') || 'Engineering';
-                      const locationShort = (job.location?.includes('Egypt') || job.location?.includes('Cairo')) ? 'EG' : (job.location || 'Remote');
+                      const locationLower = job.location?.toLowerCase() || '';
+                      let locationShort = job.location || 'Remote';
+                      if (locationLower.includes('egypt') || locationLower.includes('cairo')) locationShort = 'EG';
+                      else if (locationLower.includes('saudi') || locationLower.includes('riyadh')) locationShort = 'SA';
+                      else if (locationLower.includes('emirates') || locationLower.includes('dubai') || locationLower.includes('uae')) locationShort = 'UAE';
+                      else if (locationLower.includes('united states') || locationLower.includes(' usa') || locationLower.includes(', us')) locationShort = 'US';
+
 
                       const seniorityLower = seniority.toLowerCase();
                       const isSeniorOrLead = seniorityLower.includes('senior') || seniorityLower.includes('lead') || seniorityLower.includes('principal');

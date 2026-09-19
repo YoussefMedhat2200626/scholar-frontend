@@ -52,18 +52,16 @@ TARGET_COMPANIES = [
 ]
 
 LINKEDIN_SEARCHES: list[dict[str, str]] = [
-    # 1. Target Companies First
-    _fresh_params(keywords=company, location="Egypt") for company in TARGET_COMPANIES
+    _fresh_params(keywords=company, location=loc) 
+    for company in TARGET_COMPANIES 
+    for loc in ["Egypt", "Saudi Arabia", "United Arab Emirates", "United States"]
 ] + [
-    # 2. Frontend / Software Development (the filtering jobs in the front end)
-    _fresh_params(keywords="frontend developer", location="Egypt"),
-    _fresh_params(keywords="software development", location="Egypt"),
-    _fresh_params(keywords="software engineer", location="Egypt"),
-    # 3. Filtering other based on engineering
-    _fresh_params(keywords="engineering", location="Egypt"),
-    _fresh_params(keywords="data analyst", location="Egypt"),
-    _fresh_params(keywords="QA engineer", location="Egypt"),
-    _fresh_params(keywords="devops engineer", location="Egypt")
+    _fresh_params(keywords=role, location=loc)
+    for role in [
+        "frontend developer", "software development", "software engineer",
+        "engineering", "data analyst", "QA engineer", "devops engineer"
+    ]
+    for loc in ["Egypt", "Saudi Arabia", "United Arab Emirates", "United States"]
 ]
 
 TARGET_MAX_JOBS_PER_RUN = 35
