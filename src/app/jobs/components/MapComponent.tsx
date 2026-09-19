@@ -62,7 +62,7 @@ export default function MapComponent({ selectedCountries, onToggleCountry, count
   const geoJsonStyle = (feature: any) => {
     const isSelected = selectedCountries.includes(feature.properties.name);
     return {
-      fillColor: isSelected ? "#70B5DF" : (countryJobCounts[feature.properties.name] > 0 ? (isDark ? "#2c4a63" : "#a2cce3") : (isDark ? "#1a2336" : "#e2e8f0")),
+      fillColor: isSelected ? "#70B5DF" : isDark ? "#1a2336" : "#e2e8f0",
       weight: 1,
       opacity: 1,
       color: isDark ? "#2a3441" : "#cbd5e1",
