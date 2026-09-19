@@ -5,9 +5,11 @@ import JobModal from './components/JobModal';
 import CompanyModal from './components/CompanyModal';
 import MapFilterModal from './components/MapFilterModal';
 import CompaniesGrid from './components/CompaniesGrid';
+import FilterSearchInput from './components/FilterSearchInput';
 import { CompanyMeta, COMPANIES_META } from '@/src/data/companies';
 import type { CompanyMonthlyStat } from '@/src/lib/jobsDb';
 import { Search, ChevronDown, User, Briefcase, Code, Globe, AlertCircle, Map, ChevronUp, Check, MapPin, MousePointerClick } from 'lucide-react';
+import { Search, ChevronDown, User, Briefcase, Code, Globe, AlertCircle, Map, ChevronUp, Check, MapPin, RotateCcw, MousePointerClick } from 'lucide-react';
 
 const getCompanyColor = (companyName: string) => {
   if (!companyName) return 'bg-emerald-600';
@@ -102,11 +104,11 @@ function CustomSelect({
     <div className="relative flex-1 lg:max-w-[280px]" ref={ref}>
       {Icon && (
         <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none z-10">
-          <Icon className="h-4 w-4 text-neutral-400" />
+          <Icon className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
         </div>
       )}
       <div 
-        className={`w-full bg-[#111827]/50 border border-white/5 text-neutral-300 text-sm rounded-xl py-3.5 ${Icon ? 'pl-11' : 'pl-5'} pr-10 cursor-pointer flex items-center justify-between transition-all hover:bg-white/10 select-none`}
+        className={`w-full bg-neutral-100/75 dark:bg-neutral-800/50 border border-neutral-200 dark:border-white/5 text-neutral-800 dark:text-neutral-300 text-sm rounded-xl py-3.5 ${Icon ? 'pl-11' : 'pl-5'} pr-10 cursor-pointer flex items-center justify-between transition-all hover:bg-neutral-200/50 dark:hover:bg-white/10 select-none`}
         onClick={() => { if (!isOpen) setIsOpen(true); }}
       >
         {searchable && isOpen ? (
@@ -114,7 +116,7 @@ function CustomSelect({
             ref={inputRef}
             type="text" 
             placeholder="Search..." 
-            className="w-full bg-transparent border-none text-neutral-200 focus:outline-none focus:ring-0 p-0 m-0"
+            className="w-full bg-transparent border-none text-neutral-900 dark:text-neutral-200 focus:outline-none focus:ring-0 p-0 m-0 placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onClick={(e) => e.stopPropagation()}
@@ -123,16 +125,16 @@ function CustomSelect({
           <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
         )}
         <ChevronDown 
-          className={`absolute right-4 h-4 w-4 text-neutral-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
+          className={`absolute right-4 h-4 w-4 text-neutral-500 dark:text-neutral-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
           onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen); }} 
         />
       </div>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-2 bg-[#1a2332]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl flex flex-col overflow-hidden">
+        <div className="absolute z-50 w-full mt-2 bg-white/95 dark:bg-neutral-600/[0.98] backdrop-blur-xl border border-neutral-200 dark:border-white/10 rounded-xl shadow-2xl flex flex-col overflow-hidden">
           <div className="max-h-60 overflow-y-auto py-2">
             <div 
-              className={`px-4 py-2.5 text-sm cursor-pointer transition-colors select-none ${value === '' ? 'bg-cyan-500/10 text-cyan-400' : 'text-neutral-400 hover:bg-white/5 hover:text-neutral-200'}`}
+              className={`px-4 py-2.5 text-sm cursor-pointer transition-colors select-none ${value === '' ? 'bg-primary-50 dark:bg-cyan-500/10 text-primary-600 dark:text-cyan-400 font-semibold' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/5 hover:text-neutral-900 dark:hover:text-neutral-200'}`}
               onClick={() => { onChange(''); setIsOpen(false); }}
             >
               {placeholder}
@@ -140,14 +142,14 @@ function CustomSelect({
             {filteredOptions.map((opt) => (
               <div 
                 key={opt.value}
-                className={`px-4 py-2.5 text-sm cursor-pointer transition-colors select-none ${value === opt.value ? 'bg-cyan-500/10 text-cyan-400' : 'text-neutral-300 hover:bg-white/5 hover:text-neutral-100'}`}
+                className={`px-4 py-2.5 text-sm cursor-pointer transition-colors select-none ${value === opt.value ? 'bg-primary-50 dark:bg-cyan-500/10 text-primary-600 dark:text-cyan-400 font-semibold' : 'text-neutral-800 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/5 hover:text-neutral-900 dark:hover:text-neutral-100'}`}
                 onClick={() => { onChange(opt.value); setIsOpen(false); }}
               >
                 {opt.label}
               </div>
             ))}
             {filteredOptions.length === 0 && (
-               <div className="px-4 py-2 text-sm text-neutral-500">No results found</div>
+               <div className="px-4 py-2 text-sm text-neutral-400 dark:text-neutral-500">No results found</div>
             )}
           </div>
         </div>
@@ -233,6 +235,16 @@ export default function JobsClient({
     setSelectedCountries(prev => 
       prev.includes(country) ? prev.filter(c => c !== country) : [...prev, country]
     );
+  };
+
+  const hasActiveFilters = Boolean(searchQuery || selectedDiscipline || selectedCountries.length > 0 || selectedCompaniesFilter.length > 0);
+
+  const handleResetAllFilters = () => {
+    setSearchQuery('');
+    setSelectedDiscipline('');
+    setSelectedCountries([]);
+    setSelectedCompaniesFilter([]);
+    setCompanySearchQuery('');
   };
 
 
@@ -464,26 +476,26 @@ export default function JobsClient({
   }, [otherCompaniesList, companySearchQuery, selectedCompaniesFilter]);
 
   return (
-    <div className="min-h-screen bg-[#09111e] font-main tracking-eyebrow pt-32 pb-12 px-4 sm:px-6 lg:px-12 relative flex flex-col">
+    <div className="min-h-screen bg-neutral-50 dark:bg-background font-main tracking-eyebrow pt-32 pb-12 px-4 sm:px-6 lg:px-12 relative flex flex-col transition-colors duration-200">
       
       {/* Background Glows matching Figma */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-cyan-900/20 blur-[150px] rounded-full translate-x-1/3 -translate-y-1/3"></div>
+        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-cyan-500/10 dark:bg-cyan-900/20 blur-[150px] rounded-full translate-x-1/3 -translate-y-1/3"></div>
       </div>
 
       <div className="max-w-[1440px] mx-auto relative z-10 flex flex-col flex-1 min-h-0 w-full">
         
         {/* Tabs */}
-        <div className="flex gap-2 border-b border-white/10 mb-8 overflow-x-auto custom-scrollbar shrink-0">
+        <div className="flex gap-2 border-b border-neutral-200 dark:border-white/10 mb-8 overflow-x-auto custom-scrollbar shrink-0">
           <button 
             onClick={() => setActiveTab('jobs')}
-            className={`pb-4 px-6 font-bold text-lg whitespace-nowrap transition-all border-b-2 ${activeTab === 'jobs' ? 'border-[#70B5DF] text-[#70B5DF]' : 'border-transparent text-neutral-500 hover:text-neutral-300'}`}
+            className={`pb-4 px-6 font-bold text-lg whitespace-nowrap transition-all border-b-2 ${activeTab === 'jobs' ? 'border-primary-500 text-primary-600 dark:border-[#70B5DF] dark:text-[#70B5DF]' : 'border-transparent text-neutral-500 dark:text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300'}`}
           >
             Career Map
           </button>
           <button 
             onClick={() => setActiveTab('companies')}
-            className={`pb-4 px-6 font-bold text-lg whitespace-nowrap transition-all border-b-2 ${activeTab === 'companies' ? 'border-[#70B5DF] text-[#70B5DF]' : 'border-transparent text-neutral-500 hover:text-neutral-300'}`}
+            className={`pb-4 px-6 font-bold text-lg whitespace-nowrap transition-all border-b-2 ${activeTab === 'companies' ? 'border-primary-500 text-primary-600 dark:border-[#70B5DF] dark:text-[#70B5DF]' : 'border-transparent text-neutral-500 dark:text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300'}`}
           >
             Companies
           </button>
@@ -496,44 +508,37 @@ export default function JobsClient({
             {/* Hero Section */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 shrink-0">
               <div>
-                <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-wide uppercase">
-                  Global Career Map
+                <h1 className="text-4xl sm:text-5xl font-extrabold text-neutral-900 dark:text-white tracking-wide uppercase">
+                  Career Explorer
                 </h1>
-                <p className="text-neutral-400 mt-2 text-base sm:text-lg">
+                <p className="text-neutral-600 dark:text-neutral-400 mt-2 text-base sm:text-lg">
                   Discover your next career move across the global semiconductor and tech landscape.
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-emerald-400 text-xs font-semibold shrink-0 self-start sm:self-center">
+              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-xs font-semibold shrink-0 self-start sm:self-center shadow-xs">
                 <Briefcase className="w-3.5 h-3.5" />
                 <span>{filteredJobs.length} Openings</span>
               </div>
             </div>
 
             {/* Filter Bar */}
-            <div className="flex flex-col lg:flex-row gap-4 mb-8 bg-[#1a2332]/80 backdrop-blur-md p-2 rounded-2xl border border-white/5 shadow-lg relative z-50 shrink-0">
+            <div className="flex flex-col lg:flex-row gap-4 mb-8 bg-white/90 dark:bg-neutral-600/80 backdrop-blur-md p-2 rounded-2xl border border-neutral-200 dark:border-white/5 shadow-sm relative z-50 shrink-0">
               {/* Select Countries Button */}
               <button 
                 onClick={() => setIsMapModalOpen(true)}
-                className="flex items-center gap-2 bg-[#111827]/50 border border-white/5 text-neutral-200 text-sm rounded-xl py-3.5 px-5 hover:bg-white/10 transition-colors shrink-0 whitespace-nowrap lg:max-w-[200px]"
+                className="flex items-center gap-2 bg-neutral-100/75 dark:bg-neutral-800/50 border border-neutral-200 dark:border-white/5 text-neutral-800 dark:text-neutral-200 text-sm rounded-xl py-3.5 px-5 hover:bg-neutral-200/60 dark:hover:bg-white/10 transition-colors shrink-0 whitespace-nowrap lg:max-w-[200px]"
               >
-                <Map className="w-4 h-4 text-neutral-400 shrink-0" />
+                <Map className="w-4 h-4 text-neutral-500 dark:text-neutral-400 shrink-0" />
                 <span className="truncate">Select Countries ({selectedCountries.length})</span>
               </button>
 
               {/* Search Input */}
-              <div className="relative flex-1">
-                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none z-10">
-                  <Search className="h-4 w-4 text-neutral-400" />
-                </div>
-                <input
-                  type="text"
-                  className="w-full bg-[#111827]/50 border border-white/5 text-neutral-200 text-sm rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:border-white/20 placeholder-neutral-500"
-                  placeholder="Search position, stack..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
+              <FilterSearchInput
+                placeholder="Search position, stack..."
+                value={searchQuery}
+                onChange={setSearchQuery}
+              />
 
               {/* Disciplines Dropdown */}
               <CustomSelect
@@ -543,6 +548,21 @@ export default function JobsClient({
                 options={uniqueDisciplines.map(d => ({ label: d, value: d }))}
                 searchable
               />
+
+              {/* Reset All Filters Button */}
+              <button
+                type="button"
+                onClick={handleResetAllFilters}
+                title={hasActiveFilters ? "Reset all filters" : "No active filters"}
+                aria-label="Reset all filters"
+                className={`p-3 border rounded-xl transition-all flex items-center justify-center shrink-0 self-stretch sm:self-auto cursor-pointer ${
+                  hasActiveFilters
+                    ? "bg-rose-100 dark:bg-rose-950/40 border-rose-300 dark:border-rose-500/30 text-rose-700 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-900/50 hover:text-rose-800 dark:hover:text-rose-200"
+                    : "bg-neutral-100/75 dark:bg-neutral-800/50 border-neutral-200 dark:border-white/5 text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 hover:bg-neutral-200/50 dark:hover:bg-white/10"
+                }`}
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
             </div>
 
             {serverError && (
@@ -558,20 +578,20 @@ export default function JobsClient({
               
               {/* Left Sidebar - Brands/Companies Filter */}
               <aside className="w-full lg:w-64 shrink-0 flex flex-col gap-4 lg:sticky lg:top-28">
-                <div className="bg-[#1a2332]/80 backdrop-blur-md rounded-2xl border border-white/5 p-4 shadow-lg flex flex-col max-h-[600px]">
+                <div className="bg-white/90 dark:bg-neutral-600/80 backdrop-blur-md rounded-2xl border border-neutral-200 dark:border-white/5 p-4 shadow-sm flex flex-col max-h-[600px]">
                   <div className="flex items-center justify-between mb-3 shrink-0">
-                    <h3 className="text-lg font-bold text-white tracking-wide uppercase">Brand</h3>
-                    <ChevronUp className="w-4 h-4 text-neutral-400" />
+                    <h3 className="text-lg font-bold text-neutral-900 dark:text-white tracking-wide uppercase">Brand</h3>
+                    <ChevronUp className="w-4 h-4 text-neutral-500 dark:text-neutral-400" />
                   </div>
                   
                   {/* Search Companies */}
                   <div className="relative mb-3 shrink-0">
                     <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none z-10">
-                      <Search className="h-4 w-4 text-neutral-400" />
+                      <Search className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
                     </div>
                     <input
                       type="text"
-                      className="w-full bg-[#111827]/50 border border-white/5 text-neutral-200 text-sm rounded-lg py-2 pl-9 pr-3 focus:outline-none focus:border-white/20 placeholder-neutral-500"
+                      className="w-full bg-neutral-100/75 dark:bg-neutral-800/50 border border-neutral-200 dark:border-white/5 text-neutral-900 dark:text-neutral-200 text-sm rounded-lg py-2 pl-9 pr-3 focus:outline-none focus:border-primary-400 dark:focus:border-white/20 placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
                       placeholder="Search"
                       value={companySearchQuery}
                       onChange={(e) => setCompanySearchQuery(e.target.value)}
@@ -582,19 +602,19 @@ export default function JobsClient({
                   <div className="flex flex-col gap-1.5 flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-0">
                     {filteredMainCompanies.map(company => (
                       <label key={company} onClick={() => handleToggleCompany(company)} className="flex items-center gap-3 cursor-pointer group">
-                        <div className={`w-5 h-5 rounded flex items-center justify-center border transition-all ${selectedCompaniesFilter.includes(company) ? 'bg-[#70B5DF] border-[#70B5DF]' : 'bg-[#111827]/50 border-white/10 group-hover:border-white/30'}`}>
-                          {selectedCompaniesFilter.includes(company) && <Check className="w-3.5 h-3.5 text-[#0a0f18] font-bold" />}
+                        <div className={`w-5 h-5 rounded flex items-center justify-center border transition-all ${selectedCompaniesFilter.includes(company) ? 'bg-[#70B5DF] border-[#70B5DF]' : 'bg-neutral-100 dark:bg-neutral-800/50 border-neutral-300 dark:border-white/10 group-hover:border-primary-400 dark:group-hover:border-white/30'}`}>
+                          {selectedCompaniesFilter.includes(company) && <Check className="w-3.5 h-3.5 text-neutral-900 font-bold" />}
                         </div>
-                        <span className="text-sm text-neutral-300 group-hover:text-white transition-colors truncate">{company}</span>
+                        <span className="text-sm text-neutral-700 dark:text-neutral-300 group-hover:text-neutral-900 dark:group-hover:text-white transition-colors truncate">{company}</span>
                       </label>
                     ))}
 
                     {showAllCompanies && filteredOtherCompanies.map(company => (
                       <label key={company} onClick={() => handleToggleCompany(company)} className="flex items-center gap-3 cursor-pointer group">
-                        <div className={`w-5 h-5 rounded flex items-center justify-center border transition-all ${selectedCompaniesFilter.includes(company) ? 'bg-[#70B5DF] border-[#70B5DF]' : 'bg-[#111827]/50 border-white/10 group-hover:border-white/30'}`}>
-                          {selectedCompaniesFilter.includes(company) && <Check className="w-3.5 h-3.5 text-[#0a0f18] font-bold" />}
+                        <div className={`w-5 h-5 rounded flex items-center justify-center border transition-all ${selectedCompaniesFilter.includes(company) ? 'bg-[#70B5DF] border-[#70B5DF]' : 'bg-neutral-100 dark:bg-neutral-800/50 border-neutral-300 dark:border-white/10 group-hover:border-primary-400 dark:group-hover:border-white/30'}`}>
+                          {selectedCompaniesFilter.includes(company) && <Check className="w-3.5 h-3.5 text-neutral-900 font-bold" />}
                         </div>
-                        <span className="text-sm text-neutral-400 group-hover:text-neutral-200 transition-colors truncate">{company}</span>
+                        <span className="text-sm text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-800 dark:group-hover:text-neutral-200 transition-colors truncate">{company}</span>
                       </label>
                     ))}
                   </div>
@@ -603,7 +623,7 @@ export default function JobsClient({
                   {(otherCompaniesList.length > 0 || (companySearchQuery && filteredOtherCompanies.length > 0)) && (
                     <button
                       onClick={() => setShowAllCompanies(!showAllCompanies)}
-                      className="mt-4 text-sm font-semibold text-[#70B5DF] hover:text-[#5da0c9] transition-colors w-full text-left shrink-0"
+                      className="mt-4 text-sm font-semibold text-primary-600 hover:text-primary-700 dark:text-[#70B5DF] dark:hover:text-[#5da0c9] transition-colors w-full text-left shrink-0"
                     >
                       {showAllCompanies ? "See Less" : "See All"}
                     </button>
@@ -614,10 +634,10 @@ export default function JobsClient({
               {/* Main Content - Jobs Grid */}
               <div className="flex-1 w-full pb-12">
                 {filteredJobs.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-20 bg-[#1a2332]/50 rounded-2xl border border-white/5">
-                    <AlertCircle className="w-12 h-12 text-neutral-500 mb-4" />
-                    <h3 className="text-xl font-bold text-white mb-2">No jobs found</h3>
-                    <p className="text-neutral-400">Try adjusting your filters or search query.</p>
+                  <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-neutral-700/50 rounded-2xl border border-neutral-200 dark:border-white/5 shadow-sm">
+                    <AlertCircle className="w-12 h-12 text-neutral-400 dark:text-neutral-500 mb-4" />
+                    <h3 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">No jobs found</h3>
+                    <p className="text-neutral-600 dark:text-neutral-400">Try adjusting your filters or search query.</p>
                   </div>
                 ) : (
                   <div className="grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 relative z-10">
@@ -634,14 +654,14 @@ export default function JobsClient({
                       const seniorityLower = seniority.toLowerCase();
                       const isSeniorOrLead = seniorityLower.includes('senior') || seniorityLower.includes('lead') || seniorityLower.includes('principal');
                       const seniorityColor = isSeniorOrLead
-                        ? 'bg-purple-950/60 border-purple-500/30 text-purple-400'
-                        : 'bg-sky-950/60 border-sky-500/30 text-sky-400';
+                        ? 'bg-purple-50 border-purple-200 text-purple-700 dark:bg-purple-950/60 dark:border-purple-500/30 dark:text-purple-400'
+                        : 'bg-sky-50 border-sky-200 text-sky-700 dark:bg-sky-950/60 dark:border-sky-500/30 dark:text-sky-400';
 
                       return (
                         <div 
                           key={job.id} 
                           onClick={() => setSelectedJob(job)}
-                          className="bg-[#151c2c]/80 backdrop-blur-sm border border-white/5 hover:border-[#70B5DF] hover:[box-shadow:0px_0px_15px_rgba(112,181,223,0.3)] hover:bg-[#1a2336] transition-all duration-300 cursor-pointer rounded-2xl p-6 flex flex-col relative group"
+                          className="bg-white dark:bg-neutral-700/80 backdrop-blur-sm border border-neutral-200/80 dark:border-white/5 hover:border-primary-300 dark:hover:border-[#70B5DF] hover:[box-shadow:0px_0px_15px_rgba(112,181,223,0.3)] hover:bg-neutral-50/70 dark:hover:bg-neutral-600 transition-all duration-300 cursor-pointer rounded-2xl p-6 flex flex-col relative group shadow-sm hover:shadow-md dark:shadow-none"
                         >
                           {/* Top Row: Logo and EG Badge */}
                           <div className="flex items-start justify-between mb-4">
@@ -649,16 +669,16 @@ export default function JobsClient({
                               {job.company ? job.company.charAt(0).toUpperCase() : 'C'}
                             </div>
                             
-                            <div className="px-2.5 py-1 rounded bg-white/5 border border-white/10 text-neutral-300 text-xs font-bold tracking-wider">
+                            <div className="px-2.5 py-1 rounded bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10 text-neutral-700 dark:text-neutral-300 text-xs font-bold tracking-wider">
                               {locationShort}
                             </div>
                           </div>
 
                           {/* Title and Company */}
-                          <h3 className="text-white font-bold text-[17px] leading-snug mb-1.5 line-clamp-2">
+                          <h3 className="text-neutral-900 dark:text-white font-bold text-[17px] leading-snug mb-1.5 line-clamp-2 group-hover:text-primary-600 dark:group-hover:text-primary-300 transition-colors">
                             {job.title}
                           </h3>
-                          <p className="text-neutral-400 text-sm mb-6">
+                          <p className="text-neutral-600 dark:text-neutral-400 text-sm mb-6">
                             {job.company || 'Unknown Company'}
                           </p>
 
@@ -670,7 +690,7 @@ export default function JobsClient({
                                 <User className="w-3.5 h-3.5 shrink-0" />
                                 <span>{seniority}</span>
                               </div>
-                              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/50 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold">
+                              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/50 dark:border-emerald-500/30 dark:text-emerald-400 text-[11px] font-bold">
                                 <Briefcase className="w-3.5 h-3.5 shrink-0" />
                                 <span>{job.job_type || 'Full-time'}</span>
                               </div>
@@ -678,11 +698,11 @@ export default function JobsClient({
 
                             {/* Row 2: Discipline, Location, and Number Visited */}
                             <div className="flex flex-wrap items-center gap-2">
-                              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-950/50 border border-cyan-500/30 text-cyan-400 text-[11px] font-bold max-w-[210px]">
+                              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-50 border-cyan-200 text-cyan-700 dark:bg-cyan-950/50 dark:border-cyan-500/30 dark:text-cyan-400 text-[11px] font-bold max-w-[210px]">
                                 <Code className="w-3.5 h-3.5 shrink-0" />
                                 <span className="truncate">{discipline}</span>
                               </div>
-                              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-950/50 border border-rose-500/30 text-rose-400 text-[11px] font-bold">
+                              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 border-rose-200 text-rose-700 dark:bg-rose-950/50 dark:border-rose-500/30 dark:text-rose-400 text-[11px] font-bold">
                                 <MapPin className="w-3.5 h-3.5 shrink-0" />
                                 <span>{locationShort}</span>
                               </div>

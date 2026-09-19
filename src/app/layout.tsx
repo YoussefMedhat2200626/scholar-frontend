@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist_Mono, Kadwa, Kanit } from "next/font/google";
 import "./globals.css";
 import AppShell from "../components/AppShell";
+import { ThemeProvider } from "../components/ThemeProvider";
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -34,10 +35,37 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${geistMono.variable} ${kanit.variable} ${kadwa.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col overflow-x-hidden">
-        <AppShell>{children}</AppShell>
+      <head>
+        <script
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var stored = localStorage.getItem('theme');
+                  if (stored === 'light') {
+                    document.documentElement.classList.remove('dark');
+                  } else if (stored === 'dark') {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    // Default fallback to dark
+                    document.documentElement.classList.add('dark');
+                  }
+                } catch (e) {
+                  document.documentElement.classList.add('dark');
+                }
+              })();
+            `,
+          }}
+        />
+      </head>
+      <body className="min-h-full flex flex-col overflow-x-hidden bg-background text-foreground transition-colors duration-200">
+        <ThemeProvider>
+          <AppShell>{children}</AppShell>
+        </ThemeProvider>
       </body>
     </html>
   );
