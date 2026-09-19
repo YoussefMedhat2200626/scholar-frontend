@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
+import { MapContainer, TileLayer, GeoJSON, Marker } from "react-leaflet";
+import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import worldGeoJSON from "@/src/data/world.geo.json";
 import { GeoJsonObject } from "geojson";
@@ -18,6 +19,45 @@ export default function MapComponent({ selectedCountries, onToggleCountry, count
   const isDark = theme === "dark";
 
   const tileUrl = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+
+  
+  const countryCenters: Record<string, [number, number]> = {
+    "Egypt": [26.8206, 30.8025],
+    "Saudi Arabia": [23.8859, 45.0792],
+    "United Arab Emirates": [23.4241, 53.8478],
+    "United States of America": [39.8283, -98.5795],
+    "United Kingdom": [55.3781, -3.4360],
+    "Germany": [51.1657, 10.4515],
+    "France": [46.2276, 2.2137],
+    "Canada": [56.1304, -106.3468],
+    "Australia": [-25.2744, 133.7751],
+    "India": [20.5937, 78.9629],
+  };
+
+  const createCustomIcon = (count: number, isDark: boolean) => {
+    return L.divIcon({
+      html: `<div class="w-8 h-8 rounded-full ${isDark ? 'bg-[#1a2336]' : 'bg-white'} border-2 border-[#70B5DF] ${isDark ? 'text-white' : 'text-neutral-900'} flex items-center justify-center font-bold text-xs shadow-lg" style="transform: translate(-50%, -50%);">${count}</div>`,
+      className: '',
+      iconSize: [0, 0], // Center the div
+      iconAnchor: [0, 0],
+    });
+  };
+
+  // Pre-calculate markers for countries with jobs
+  const markers = Object.entries(countryJobCounts)
+    .filter(([country, count]) => count > 0 && countryCenters[country])
+    .map(([country, count]) => (
+      <Marker 
+        key={country} 
+        position={countryCenters[country]} 
+        icon={createCustomIcon(count, isDark)} 
+        eventHandlers={{
+          click: () => {
+            onToggleCountry(country);
+          }
+        }}
+      />
+    ));
 
   const geoJsonStyle = (feature: any) => {
     const isSelected = selectedCountries.includes(feature.properties.name);
@@ -84,6 +124,7 @@ export default function MapComponent({ selectedCountries, onToggleCountry, count
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           className={isDark ? "dark-map-tiles" : ""}
         />
+        {markers}
         <GeoJSON 
           key={`geojson-${theme}`}
           data={worldGeoJSON as GeoJsonObject} 
