@@ -320,8 +320,26 @@ export default function JobsClient({
     if (selectedCountries.length > 0) {
       result = result.filter(job => {
         if (!job.location) return false;
-        // Standardize somewhat, or just do simple string includes
-        return selectedCountries.some(country => job.location!.toLowerCase().includes(country.toLowerCase()));
+        const loc = job.location.toLowerCase();
+        return selectedCountries.some(country => {
+          const c = country.toLowerCase();
+          if (loc.includes(c)) return true;
+          
+          if (c === 'united states of america' || c === 'united states' || c === 'usa') {
+            const usStates = [' al', ', ak', ', az', ', ar', ', ca', ', co', ', ct', ', de', ', fl', ', ga', ', hi', ', id', ', il', ', in', ', ia', ', ks', ', ky', ', la', ', me', ', md', ', ma', ', mi', ', mn', ', ms', ', mo', ', mt', ', ne', ', nv', ', nh', ', nj', ', nm', ', ny', ', nc', ', nd', ', oh', ', ok', ', or', ', pa', ', ri', ', sc', ', sd', ', tn', ', tx', ', ut', ', vt', ', va', ', wa', ', wv', ', wi', ', wy', 'united states', 'usa', ' us'];
+            return usStates.some(state => loc.includes(state));
+          }
+          if (c === 'saudi arabia') {
+            return loc.includes('saudi') || loc.includes('riyadh') || loc.includes('jeddah');
+          }
+          if (c === 'united arab emirates') {
+            return loc.includes('emirates') || loc.includes('uae') || loc.includes('dubai') || loc.includes('abu dhabi');
+          }
+          if (c === 'egypt') {
+            return loc.includes('egypt') || loc.includes('cairo') || loc.includes('alexandria');
+          }
+          return false;
+        });
       });
     }
 
@@ -654,7 +672,10 @@ export default function JobsClient({
                       if (locationLower.includes('egypt') || locationLower.includes('cairo')) locationShort = 'EG';
                       else if (locationLower.includes('saudi') || locationLower.includes('riyadh')) locationShort = 'SA';
                       else if (locationLower.includes('emirates') || locationLower.includes('dubai') || locationLower.includes('uae')) locationShort = 'UAE';
-                      else if (locationLower.includes('united states') || locationLower.includes(' usa') || locationLower.includes(', us')) locationShort = 'US';
+                      else {
+                        const isUS = ['united states', ' usa', ', us', ', al', ', ak', ', az', ', ar', ', ca', ', co', ', ct', ', de', ', fl', ', ga', ', hi', ', id', ', il', ', in', ', ia', ', ks', ', ky', ', la', ', me', ', md', ', ma', ', mi', ', mn', ', ms', ', mo', ', mt', ', ne', ', nv', ', nh', ', nj', ', nm', ', ny', ', nc', ', nd', ', oh', ', ok', ', or', ', pa', ', ri', ', sc', ', sd', ', tn', ', tx', ', ut', ', vt', ', va', ', wa', ', wv', ', wi', ', wy'].some(s => locationLower.includes(s));
+                        if (isUS) locationShort = 'US';
+                      }
 
 
                       const seniorityLower = seniority.toLowerCase();
