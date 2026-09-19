@@ -18,7 +18,7 @@ import time
 from dataclasses import dataclass
 from typing import Callable, Iterable
 
-from config import MAX_JOBS_PER_RUN, SEED_MODE_ENV
+from config import MAX_JOBS_PER_RUN, SEED_MODE_ENV, get_topic_thread_id
 try:
     from sources import ALL_FETCHERS
 except ModuleNotFoundError:  # local flat-file test layout
@@ -155,7 +155,16 @@ def send_pending_jobs(
 
     for stored in pending_jobs:
         job = stored.to_job()
-        target_topics = router(job)
+        
+        # Determine target topics and filter out unconfigured ones
+        raw_topics = router(job)
+        target_topics = []
+        for t in raw_topics:
+            if get_topic_thread_id(t) is not None:
+                target_topics.append(t)
+            else:
+                # Log but do not fail the job for unconfigured topics
+                log.warning(f"  ✗ Topic not configured ({t}) for: {job.title}")
 
         if not target_topics:
             set_job_send_status(conn, stored.id, "skipped")
