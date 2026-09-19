@@ -6,6 +6,7 @@ import CompanyModal from './components/CompanyModal';
 import MapFilterModal from './components/MapFilterModal';
 import CompaniesGrid from './components/CompaniesGrid';
 import { CompanyMeta, COMPANIES_META } from '@/src/data/companies';
+import type { CompanyMonthlyStat } from '@/src/lib/jobsDb';
 import { Search, ChevronDown, User, Briefcase, Code, Globe, AlertCircle, Map, ChevronUp, Check, MapPin, MousePointerClick } from 'lucide-react';
 
 const getCompanyColor = (companyName: string) => {
@@ -155,7 +156,15 @@ function CustomSelect({
   );
 }
 
-export default function JobsClient({ initialJobs, serverError }: { initialJobs: JobData[], serverError?: string }) {
+export default function JobsClient({
+  initialJobs,
+  companyStats = [],
+  serverError
+}: {
+  initialJobs: JobData[];
+  companyStats?: CompanyMonthlyStat[];
+  serverError?: string;
+}) {
 
   const normalizeCompany = (c: string) => {
       if (!c) return '';
@@ -718,6 +727,7 @@ export default function JobsClient({ initialJobs, serverError }: { initialJobs: 
         isOpen={!!selectedCompanyModal}
         onClose={() => setSelectedCompanyModal(null)}
         jobs={initialJobs}
+        companyStats={companyStats}
       />
     </div>
   );

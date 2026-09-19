@@ -4,7 +4,9 @@ import React, { useEffect, useState, useMemo } from "react";
 import { X, Users, MapPin, Globe, Briefcase } from "lucide-react";
 import { FaLinkedin } from "react-icons/fa";
 import { CompanyMeta } from "@/src/data/companies";
+import { matchCompanyId } from "@/src/data/companyMatcher";
 import { JobData } from "./JobModal";
+import type { CompanyMonthlyStat } from "@/src/lib/jobsDb";
 import {
   LineChart,
   Line,
@@ -20,9 +22,10 @@ interface CompanyModalProps {
   isOpen: boolean;
   onClose: () => void;
   jobs: JobData[];
+  companyStats?: CompanyMonthlyStat[];
 }
 
-export default function CompanyModal({ company, isOpen, onClose, jobs }: CompanyModalProps) {
+export default function CompanyModal({ company, isOpen, onClose, jobs, companyStats = [] }: CompanyModalProps) {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -54,29 +57,51 @@ export default function CompanyModal({ company, isOpen, onClose, jobs }: Company
     };
   }, [isOpen, onClose]);
 
+  // Clean company matching without 2-letter substring leaks
   const companyJobs = useMemo(() => {
     if (!company) return [];
-    return jobs.filter(
-      (j) => j.company && j.company.toLowerCase().includes(company.shortName.toLowerCase()) || 
-             (j.company && j.company.toLowerCase().includes(company.name.split(" ")[0].toLowerCase()))
-    );
+    return jobs.filter((j) => matchCompanyId(j.company) === company.id);
   }, [jobs, company]);
 
+  // 12-Month rolling timeline with explicit zeros for inactive months
   const chartData = useMemo(() => {
-    // Group jobs by month-year
-    const counts: Record<string, number> = {};
-    companyJobs.forEach((job) => {
+    if (!company) return [];
+
+    const now = new Date();
+    const months: string[] = [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
+      months.push(`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`);
+    }
+
+    const statsMap = new Map<string, number>();
+    for (const stat of companyStats) {
+      if (stat.company_id === company.id) {
+        statsMap.set(stat.year_month, stat.job_count);
+      }
+    }
+
+    // Include current month active jobs from companyJobs if higher than database stats
+    const currentYm = months[months.length - 1];
+    let currentMonthCount = 0;
+    for (const job of companyJobs) {
       if (job.first_seen_at) {
         const d = new Date(job.first_seen_at);
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-        counts[key] = (counts[key] || 0) + 1;
+        const ym = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+        if (ym === currentYm) {
+          currentMonthCount++;
+        }
       }
-    });
+    }
+    if (currentMonthCount > (statsMap.get(currentYm) || 0)) {
+      statsMap.set(currentYm, currentMonthCount);
+    }
 
-    return Object.entries(counts)
-      .map(([date, count]) => ({ date, count }))
-      .sort((a, b) => a.date.localeCompare(b.date));
-  }, [companyJobs]);
+    return months.map((date) => ({
+      date,
+      count: statsMap.get(date) || 0,
+    }));
+  }, [company, companyStats, companyJobs]);
 
   if (!isOpen && !isVisible) return null;
   if (!company) return null;
@@ -117,7 +142,16 @@ export default function CompanyModal({ company, isOpen, onClose, jobs }: Company
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#2a3441" vertical={false} />
-                      <XAxis dataKey="date" stroke="#6b7280" fontSize={12} tickMargin={10} />
+                      <XAxis 
+                        dataKey="date" 
+                        stroke="#6b7280" 
+                        fontSize={10} 
+                        tickMargin={10} 
+                        tickFormatter={(val: string) => {
+                          const parts = val.split('-');
+                          return parts.length === 2 ? `${parts[1]}/${parts[0].slice(2)}` : val;
+                        }}
+                      />
                       <YAxis stroke="#6b7280" fontSize={12} tickFormatter={(tick) => Math.floor(tick).toString()} allowDecimals={false} />
                       <Tooltip
                         contentStyle={{ backgroundColor: "#1a2336", borderColor: "#2a3441", borderRadius: "8px", color: "#fff" }}
