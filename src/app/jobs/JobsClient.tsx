@@ -8,8 +8,7 @@ import CompaniesGrid from './components/CompaniesGrid';
 import FilterSearchInput from './components/FilterSearchInput';
 import { CompanyMeta, COMPANIES_META } from '@/src/data/companies';
 import type { CompanyMonthlyStat } from '@/src/lib/jobsDb';
-import { Search, ChevronDown, User, Briefcase, Code, Globe, AlertCircle, Map, ChevronUp, Check, MapPin, MousePointerClick } from 'lucide-react';
-import { Search, ChevronDown, User, Briefcase, Code, Globe, AlertCircle, Map, ChevronUp, Check, MapPin, RotateCcw, MousePointerClick } from 'lucide-react';
+import { Search, ChevronDown, User, Briefcase, Code, Globe, AlertCircle, Map, ChevronUp, Check, MapPin, RotateCcw, MousePointerClick, Filter, X } from 'lucide-react';
 
 const getCompanyColor = (companyName: string) => {
   if (!companyName) return 'bg-emerald-600';
@@ -202,6 +201,7 @@ export default function JobsClient({
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
   const [visitCounts, setVisitCounts] = useState<Record<string, number>>({});
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
   const handleApplyClick = async (jobId: string | number) => {
     const key = String(jobId);
@@ -577,7 +577,7 @@ export default function JobsClient({
             <div className="flex flex-col lg:flex-row gap-8 items-start flex-1 min-h-0">
               
               {/* Left Sidebar - Brands/Companies Filter */}
-              <aside className="w-full lg:w-64 shrink-0 flex flex-col gap-4 lg:sticky lg:top-28">
+              <aside className="hidden lg:flex lg:w-64 shrink-0 flex-col gap-4 lg:sticky lg:top-28">
                 <div className="bg-white/90 dark:bg-neutral-600/80 backdrop-blur-md rounded-2xl border border-neutral-200 dark:border-white/5 p-4 shadow-sm flex flex-col max-h-[600px]">
                   <div className="flex items-center justify-between mb-3 shrink-0">
                     <h3 className="text-lg font-bold text-neutral-900 dark:text-white tracking-wide uppercase">Brand</h3>
@@ -749,6 +749,89 @@ export default function JobsClient({
         jobs={initialJobs}
         companyStats={companyStats}
       />
-    </div>
+    
+      {/* Mobile Floating Action Button (FAB) for Filters */}
+      <div className="lg:hidden fixed bottom-6 right-6 z-40">
+        <button
+          onClick={() => setIsMobileDrawerOpen(true)}
+          className="bg-primary-600 dark:bg-[#70B5DF] text-white dark:text-neutral-900 p-4 rounded-full shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+        >
+          <Filter className="w-6 h-6" />
+        </button>
+      </div>
+
+      {/* Mobile Drawer Overlay */}
+      <div 
+        className={`lg:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${isMobileDrawerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => setIsMobileDrawerOpen(false)}
+      >
+        <div 
+          className={`absolute bottom-0 left-0 right-0 h-[85vh] bg-white dark:bg-neutral-800 rounded-t-3xl p-6 shadow-2xl flex flex-col transition-transform duration-300 ${isMobileDrawerOpen ? 'translate-y-0' : 'translate-y-full'}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between mb-6 shrink-0">
+            <h2 className="text-xl font-bold text-neutral-900 dark:text-white">Filters</h2>
+            <button onClick={() => setIsMobileDrawerOpen(false)} className="p-2 rounded-full bg-neutral-100 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="bg-white/90 dark:bg-neutral-600/80 backdrop-blur-md rounded-2xl border border-neutral-200 dark:border-white/5 p-4 shadow-sm flex flex-col h-full max-h-[calc(100vh-100px)]">
+                  <div className="flex items-center justify-between mb-3 shrink-0">
+                    <h3 className="text-lg font-bold text-neutral-900 dark:text-white tracking-wide uppercase">Brand</h3>
+                    <ChevronUp className="w-4 h-4 text-neutral-500 dark:text-neutral-400" />
+                  </div>
+                  
+                  {/* Search Companies */}
+                  <div className="relative mb-3 shrink-0">
+                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none z-10">
+                      <Search className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
+                    </div>
+                    <input
+                      type="text"
+                      className="w-full bg-neutral-100/75 dark:bg-neutral-800/50 border border-neutral-200 dark:border-white/5 text-neutral-900 dark:text-neutral-200 text-sm rounded-lg py-2 pl-9 pr-3 focus:outline-none focus:border-primary-400 dark:focus:border-white/20 placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
+                      placeholder="Search"
+                      value={companySearchQuery}
+                      onChange={(e) => setCompanySearchQuery(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Company Checkboxes */}
+                  <div className="flex flex-col gap-1.5 flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-0">
+                    {filteredMainCompanies.map(company => (
+                      <label key={company} onClick={() => handleToggleCompany(company)} className="flex items-center gap-3 cursor-pointer group">
+                        <div className={`w-5 h-5 rounded flex items-center justify-center border transition-all ${selectedCompaniesFilter.includes(company) ? 'bg-[#70B5DF] border-[#70B5DF]' : 'bg-neutral-100 dark:bg-neutral-800/50 border-neutral-300 dark:border-white/10 group-hover:border-primary-400 dark:group-hover:border-white/30'}`}>
+                          {selectedCompaniesFilter.includes(company) && <Check className="w-3.5 h-3.5 text-neutral-900 font-bold" />}
+                        </div>
+                        <span className="text-sm text-neutral-700 dark:text-neutral-300 group-hover:text-neutral-900 dark:group-hover:text-white transition-colors truncate">{company}</span>
+                      </label>
+                    ))}
+
+                    {showAllCompanies && filteredOtherCompanies.map(company => (
+                      <label key={company} onClick={() => handleToggleCompany(company)} className="flex items-center gap-3 cursor-pointer group">
+                        <div className={`w-5 h-5 rounded flex items-center justify-center border transition-all ${selectedCompaniesFilter.includes(company) ? 'bg-[#70B5DF] border-[#70B5DF]' : 'bg-neutral-100 dark:bg-neutral-800/50 border-neutral-300 dark:border-white/10 group-hover:border-primary-400 dark:group-hover:border-white/30'}`}>
+                          {selectedCompaniesFilter.includes(company) && <Check className="w-3.5 h-3.5 text-neutral-900 font-bold" />}
+                        </div>
+                        <span className="text-sm text-neutral-500 dark:text-neutral-400 group-hover:text-neutral-800 dark:group-hover:text-neutral-200 transition-colors truncate">{company}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  {/* Show All Toggle */}
+                  {(otherCompaniesList.length > 0 || (companySearchQuery && filteredOtherCompanies.length > 0)) && (
+                    <button
+                      onClick={() => setShowAllCompanies(!showAllCompanies)}
+                      className="mt-4 text-sm font-semibold text-primary-600 hover:text-primary-700 dark:text-[#70B5DF] dark:hover:text-[#5da0c9] transition-colors w-full text-left shrink-0"
+                    >
+                      {showAllCompanies ? "See Less" : "See All"}
+                    </button>
+                  )}
+                </div>
+              
+          </div>
+        </div>
+      </div>
+
+</div>
   );
 }
