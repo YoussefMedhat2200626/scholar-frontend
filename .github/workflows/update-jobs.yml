@@ -13,10 +13,22 @@ permissions:
 
 jobs:
   update-jobs:
-    runs-on: macos-14
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Setup Cloudflare WARP Proxy
+        run: |
+          curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | sudo gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflare-client.list
+          sudo apt-get update && sudo apt-get install -y cloudflare-warp
+          warp-cli --accept-tos registration new
+          warp-cli --accept-tos mode proxy
+          warp-cli --accept-tos proxy port 40000
+          warp-cli --accept-tos connect
+          sleep 5
+          curl --socks5 127.0.0.1:40000 https://www.cloudflare.com/cdn-cgi/trace | grep warp=
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -31,7 +43,9 @@ jobs:
       - name: Run Job Scraper & Lifecycle Updates
         env:
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
-          SEED_MODE: "1" # Ensures Telegram sending logic is skipped
+          ALL_PROXY: socks5://127.0.0.1:40000
+          HTTP_PROXY: socks5://127.0.0.1:40000
+          HTTPS_PROXY: socks5://127.0.0.1:40000
         run: |
           cd scripts/bot
           python main.py
