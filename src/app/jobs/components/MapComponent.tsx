@@ -8,11 +8,12 @@ import { GeoJsonObject } from "geojson";
 import { useTheme } from "@/src/hooks/useTheme";
 
 interface MapComponentProps {
+  countryJobCounts?: Record<string, number>;
   selectedCountries: string[];
   onToggleCountry: (country: string) => void;
 }
 
-export default function MapComponent({ selectedCountries, onToggleCountry }: MapComponentProps) {
+export default function MapComponent({ selectedCountries, onToggleCountry, countryJobCounts = {} }: MapComponentProps) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
 
@@ -21,7 +22,7 @@ export default function MapComponent({ selectedCountries, onToggleCountry }: Map
   const geoJsonStyle = (feature: any) => {
     const isSelected = selectedCountries.includes(feature.properties.name);
     return {
-      fillColor: isSelected ? "#70B5DF" : isDark ? "#1a2336" : "#e2e8f0",
+      fillColor: isSelected ? "#70B5DF" : (countryJobCounts[feature.properties.name] > 0 ? (isDark ? "#2c4a63" : "#a2cce3") : (isDark ? "#1a2336" : "#e2e8f0")),
       weight: 1,
       opacity: 1,
       color: isDark ? "#2a3441" : "#cbd5e1",
@@ -33,7 +34,10 @@ export default function MapComponent({ selectedCountries, onToggleCountry }: Map
     const countryName = feature.properties.name;
     
     // Bind a simple tooltip on hover
-    layer.bindTooltip(countryName, {
+    const count = countryJobCounts[countryName] || 0;
+    
+    // Bind a simple tooltip on hover
+    layer.bindTooltip(`${countryName}: ${count} job${count === 1 ? '' : 's'} available`, {
       className: isDark
         ? "bg-[#151c2c] border border-[#2a3441] text-white px-2 py-1 rounded shadow-lg"
         : "bg-white border border-neutral-200 text-neutral-900 px-2 py-1 rounded shadow-lg",

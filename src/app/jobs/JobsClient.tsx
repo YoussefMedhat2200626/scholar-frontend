@@ -201,6 +201,31 @@ export default function JobsClient({
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
   const [visitCounts, setVisitCounts] = useState<Record<string, number>>({});
+
+  const countryJobCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    (initialJobs || []).forEach(job => {
+      if (!job.location) return;
+      const loc = job.location.toLowerCase();
+      
+      let countryName = '';
+      if (loc.includes('egypt') || loc.includes('cairo') || loc.includes('alexandria')) {
+        countryName = 'Egypt';
+      } else if (loc.includes('saudi') || loc.includes('riyadh') || loc.includes('jeddah')) {
+        countryName = 'Saudi Arabia';
+      } else if (loc.includes('emirates') || loc.includes('uae') || loc.includes('dubai') || loc.includes('abu dhabi')) {
+        countryName = 'United Arab Emirates';
+      } else if (loc.includes('united states') || loc.includes(' usa') || loc.includes(', us') || loc === 'us' || loc === 'usa' || /(?:,\s*(?:al|ak|az|ar|ca|co|ct|de|fl|ga|hi|id|il|in|ia|ks|ky|la|me|md|ma|mi|mn|ms|mo|mt|ne|nv|nh|nj|nm|ny|nc|nd|oh|ok|or|pa|ri|sc|sd|tn|tx|ut|vt|va|wa|wv|wi|wy))(?:$|,\s*(?:us|usa|united states))/i.test(loc)) {
+        countryName = 'United States of America';
+      }
+
+      if (countryName) {
+        counts[countryName] = (counts[countryName] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [initialJobs]);
+
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
   const handleApplyClick = async (jobId: string | number) => {
@@ -759,6 +784,7 @@ export default function JobsClient({
         selectedCountries={selectedCountries}
         onToggleCountry={handleToggleCountry}
         onConfirm={() => setIsMapModalOpen(false)}
+        countryJobCounts={countryJobCounts}
       />
       
       <JobModal 

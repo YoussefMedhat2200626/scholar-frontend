@@ -15,6 +15,7 @@ const MapComponent = dynamic(() => import("./MapComponent"), {
 });
 
 interface MapFilterModalProps {
+  countryJobCounts?: Record<string, number>;
   isOpen: boolean;
   onClose: () => void;
   selectedCountries: string[];
@@ -27,7 +28,8 @@ export default function MapFilterModal({
   onClose,
   selectedCountries,
   onToggleCountry,
-  onConfirm
+  onConfirm,
+  countryJobCounts = {}
 }: MapFilterModalProps) {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -105,6 +107,7 @@ export default function MapFilterModal({
           <MapComponent 
             selectedCountries={selectedCountries} 
             onToggleCountry={onToggleCountry} 
+            countryJobCounts={countryJobCounts} 
           />
         </div>
 
