@@ -18,6 +18,22 @@ export default function MapComponent({ selectedCountries, onToggleCountry, count
   const { theme } = useTheme();
   const isDark = theme === "dark";
 
+  const selectedCountriesRef = React.useRef(selectedCountries);
+  const geoJsonRef = React.useRef<any>(null);
+
+  React.useEffect(() => {
+    selectedCountriesRef.current = selectedCountries;
+    if (geoJsonRef.current) {
+      geoJsonRef.current.eachLayer((layer: any) => {
+        const countryName = layer.feature.properties.name;
+        const isSelected = selectedCountries.includes(countryName);
+        layer.setStyle({
+          fillColor: isSelected ? "#70B5DF" : isDark ? "#1a2336" : "#e2e8f0",
+        });
+      });
+    }
+  }, [selectedCountries, isDark]);
+
   const tileUrl = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 
   
@@ -87,7 +103,7 @@ export default function MapComponent({ selectedCountries, onToggleCountry, count
     layer.on({
       mouseover: (e: any) => {
         const target = e.target;
-        if (!selectedCountries.includes(countryName)) {
+        if (!selectedCountriesRef.current.includes(countryName)) {
           target.setStyle({
             fillColor: isDark ? "#3a4a5e" : "#cbd5e1",
             fillOpacity: 0.9,
@@ -96,7 +112,7 @@ export default function MapComponent({ selectedCountries, onToggleCountry, count
       },
       mouseout: (e: any) => {
         const target = e.target;
-        if (!selectedCountries.includes(countryName)) {
+        if (!selectedCountriesRef.current.includes(countryName)) {
           target.setStyle({
             fillColor: isDark ? "#1a2336" : "#e2e8f0",
             fillOpacity: isDark ? 0.8 : 0.85,
@@ -126,6 +142,7 @@ export default function MapComponent({ selectedCountries, onToggleCountry, count
         />
         {markers}
         <GeoJSON 
+          ref={geoJsonRef}
           key={`geojson-${theme}`}
           data={worldGeoJSON as GeoJsonObject} 
           style={geoJsonStyle}
