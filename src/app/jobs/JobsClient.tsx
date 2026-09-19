@@ -326,8 +326,8 @@ export default function JobsClient({
           if (loc.includes(c)) return true;
           
           if (c === 'united states of america' || c === 'united states' || c === 'usa') {
-            const usStates = [' al', ', ak', ', az', ', ar', ', ca', ', co', ', ct', ', de', ', fl', ', ga', ', hi', ', id', ', il', ', in', ', ia', ', ks', ', ky', ', la', ', me', ', md', ', ma', ', mi', ', mn', ', ms', ', mo', ', mt', ', ne', ', nv', ', nh', ', nj', ', nm', ', ny', ', nc', ', nd', ', oh', ', ok', ', or', ', pa', ', ri', ', sc', ', sd', ', tn', ', tx', ', ut', ', vt', ', va', ', wa', ', wv', ', wi', ', wy', 'united states', 'usa', ' us'];
-            return usStates.some(state => loc.includes(state));
+            const isUS = loc.includes('united states') || loc.includes(' usa') || loc.includes(', us') || loc === 'us' || loc === 'usa' || /(?:,\s*(?:al|ak|az|ar|ca|co|ct|de|fl|ga|hi|id|il|in|ia|ks|ky|la|me|md|ma|mi|mn|ms|mo|mt|ne|nv|nh|nj|nm|ny|nc|nd|oh|ok|or|pa|ri|sc|sd|tn|tx|ut|vt|va|wa|wv|wi|wy))(?:$|,\s*(?:us|usa|united states))/i.test(loc);
+            return isUS;
           }
           if (c === 'saudi arabia') {
             return loc.includes('saudi') || loc.includes('riyadh') || loc.includes('jeddah');
@@ -673,7 +673,7 @@ export default function JobsClient({
                       else if (locationLower.includes('saudi') || locationLower.includes('riyadh')) locationShort = 'SA';
                       else if (locationLower.includes('emirates') || locationLower.includes('dubai') || locationLower.includes('uae')) locationShort = 'UAE';
                       else {
-                        const isUS = ['united states', ' usa', ', us', ', al', ', ak', ', az', ', ar', ', ca', ', co', ', ct', ', de', ', fl', ', ga', ', hi', ', id', ', il', ', in', ', ia', ', ks', ', ky', ', la', ', me', ', md', ', ma', ', mi', ', mn', ', ms', ', mo', ', mt', ', ne', ', nv', ', nh', ', nj', ', nm', ', ny', ', nc', ', nd', ', oh', ', ok', ', or', ', pa', ', ri', ', sc', ', sd', ', tn', ', tx', ', ut', ', vt', ', va', ', wa', ', wv', ', wi', ', wy'].some(s => locationLower.includes(s));
+                        const isUS = locationLower.includes('united states') || locationLower.includes(' usa') || locationLower.includes(', us') || locationLower === 'us' || locationLower === 'usa' || /(?:,\s*(?:al|ak|az|ar|ca|co|ct|de|fl|ga|hi|id|il|in|ia|ks|ky|la|me|md|ma|mi|mn|ms|mo|mt|ne|nv|nh|nj|nm|ny|nc|nd|oh|ok|or|pa|ri|sc|sd|tn|tx|ut|vt|va|wa|wv|wi|wy))(?:$|,\s*(?:us|usa|united states))/i.test(locationLower);
                         if (isUS) locationShort = 'US';
                       }
 
