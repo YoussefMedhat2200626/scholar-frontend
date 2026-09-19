@@ -45,6 +45,7 @@ const getCompanyColor = (companyName: string) => {
 
 interface JobData {
   id: string | number;
+  source?: string;
   title: string;
   company?: string;
   tags_json?: string;

@@ -5,6 +5,7 @@ import { X, Briefcase, Globe, Code, User, Clock, MousePointerClick } from "lucid
 
 export interface JobData {
   id: string | number;
+  source?: string;
   title: string;
   company?: string;
   location?: string;
