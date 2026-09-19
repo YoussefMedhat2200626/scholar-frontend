@@ -4,11 +4,12 @@ Shared HTTP helpers with session reuse, timeouts, and error handling.
 
 import logging
 import requests
+import cloudscraper
 from config import REQUEST_TIMEOUT
 
 log = logging.getLogger(__name__)
 
-_session = requests.Session()
+_session = cloudscraper.create_scraper()
 _session.headers.update({
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
