@@ -194,6 +194,7 @@ export default function JobsClient({
     );
   };
   const [selectedDiscipline, setSelectedDiscipline] = useState('');
+  const [selectedSource, setSelectedSource] = useState('');
   const [selectedCompany, setSelectedCompany] = useState('');
   const [activeTab, setActiveTab] = useState<'jobs' | 'companies'>('jobs');
   const [selectedJob, setSelectedJob] = useState<JobData | null>(null);
@@ -262,7 +263,7 @@ export default function JobsClient({
     );
   };
 
-  const hasActiveFilters = Boolean(searchQuery || selectedDiscipline || selectedCountries.length > 0 || selectedCompaniesFilter.length > 0);
+  const hasActiveFilters = Boolean(searchQuery || selectedDiscipline || selectedSource || selectedCountries.length > 0 || selectedCompaniesFilter.length > 0);
 
   const handleResetAllFilters = () => {
     setSearchQuery('');
@@ -270,6 +271,7 @@ export default function JobsClient({
     setSelectedCountries([]);
     setSelectedCompaniesFilter([]);
     setCompanySearchQuery('');
+    setSelectedSource('');
   };
 
 
@@ -286,6 +288,10 @@ export default function JobsClient({
     }
 
     
+
+    if (selectedSource) {
+      result = result.filter(job => job.source?.toLowerCase() === selectedSource.toLowerCase());
+    }
 
     if (selectedCompaniesFilter.length > 0) {
       result = result.filter(job => {
@@ -581,6 +587,17 @@ export default function JobsClient({
                 placeholder="Search position, stack..."
                 value={searchQuery}
                 onChange={setSearchQuery}
+              />
+
+              {/* Source Dropdown */}
+              <CustomSelect
+                value={selectedSource}
+                onChange={setSelectedSource}
+                placeholder="All Sources"
+                options={[
+                  { label: 'LinkedIn', value: 'linkedin' },
+                  { label: 'Wuzzuf', value: 'wuzzuf' }
+                ]}
               />
 
               {/* Disciplines Dropdown */}
