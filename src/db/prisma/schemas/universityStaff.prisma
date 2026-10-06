@@ -1,0 +1,46 @@
+model UniversityStaff {
+  id                            Int             @id @default(autoincrement())
+  name                          String 
+  email                         String          @unique   
+  alternativeEmail              String?
+  mobile                        String?
+  title                         String?         
+  degree                        String?
+  facultyId                     Int?
+  faculty                       Faculty?        @relation(fields: [facultyId], references: [id],     onDelete: SetNull)
+  
+  departmentId                  Int?
+  department                    Department?     @relation(fields: [departmentId], references: [id],     onDelete: SetNull)
+  
+  universityId                  Int
+  university                    University      @relation(fields: [universityId], references: [id] , onDelete: Cascade)
+  universityProfileLink         String?
+  cvLink                        String?   
+  researchGateLink              String?
+  googleScholarLink             String?
+  academiaLink                  String? 
+  linkedInLink                  String?
+  youtubeLink                   String?
+  orcidLink                     String?
+  scopusLink                    String?
+  titleProfile                 String?
+  facultyProfile               String?
+  citations                     Int?
+  researchInterests            String[]
+  bio                           String?
+  otherUrl                     String?
+  researchPapers              ResearchPaper[]
+
+  createdAt                     DateTime        @default(now()) 
+  updatedAt                     DateTime        @updatedAt 
+
+    @@index([name]) 
+    @@index([universityId])
+    @@index([facultyId])
+    @@index([departmentId])
+    
+    @@map("universityStaff")
+
+}
+
+

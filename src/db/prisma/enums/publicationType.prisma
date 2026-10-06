@@ -1,0 +1,6 @@
+enum PublicationType {
+ Transaction
+ Magazine
+ Journal
+ Letter
+}

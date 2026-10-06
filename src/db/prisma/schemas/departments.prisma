@@ -1,0 +1,23 @@
+model Department {
+  id          Int      @id @default(autoincrement())
+
+  name        String
+  shortName   String?
+  website     String?
+  description String?
+
+  facultyId   Int
+  faculty     Faculty @relation(fields: [facultyId], references: [id], onDelete: Cascade)
+
+  staff       UniversityStaff[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([name, facultyId])
+
+  @@index([facultyId])
+  @@index([name])
+  
+  @@map("departments")
+}

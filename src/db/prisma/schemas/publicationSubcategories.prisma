@@ -1,0 +1,12 @@
+model PublicationSubCategory {
+  id           Int                   @id @default(autoincrement())
+  domainId     Int                   
+  name         String                @db.VarChar(255)
+
+  // Relations
+  domain       PublicationDomain     @relation(fields: [domainId], references: [id], onDelete: Cascade)
+  publications AcademicPublication[]
+
+  @@index([domainId])
+  @@map("publicationSubcategories")
+}

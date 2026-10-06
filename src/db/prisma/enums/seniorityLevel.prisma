@@ -1,0 +1,6 @@
+enum SeniorityLevel {
+  junior
+  mid
+  senior
+  lead
+}

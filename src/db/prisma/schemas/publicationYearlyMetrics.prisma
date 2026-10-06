@@ -1,0 +1,30 @@
+model PublicationYearlyMetric {
+  id                        Int                 @id @default(autoincrement())
+  publicationId             Int
+  metricYear                Int
+  indexingService           PublicationIndex?
+  impactFactor              Decimal?            @db.Decimal(10, 4)
+  impactFactor5yr           Decimal?            @db.Decimal(10, 4)
+  quartile                  Quartile?           
+  jci                       Decimal?            @db.Decimal(10, 4)
+  sjr                       Decimal?            @db.Decimal(10, 4)
+  h5Index                   Decimal?            @db.Decimal(10, 4)
+  eigenfactor               Decimal?            @db.Decimal(10, 6)
+  articleInfluenceScore     Decimal?            @db.Decimal(10, 4)
+  citescore                 Decimal?            @db.Decimal(10, 4)
+  totalCitations            Int
+  articleDownloads          Int
+  createdAt                 DateTime            @default(now())
+  updatedAt                 DateTime            @updatedAt
+
+  // Relations
+  publication               AcademicPublication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+
+  // Composite UK with pub_id and metric_year
+  @@unique([publicationId, metricYear, indexingService])
+  @@index([metricYear, citescore(sort: Desc)]) 
+  @@index([metricYear, impactFactor(sort: Desc)]) 
+  @@index([metricYear, quartile])
+  @@index([metricYear, sjr(sort: Desc)])
+  @@map("publicationYearlyMetrics")
+}

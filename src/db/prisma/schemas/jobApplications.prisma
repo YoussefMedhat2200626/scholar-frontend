@@ -1,0 +1,14 @@
+model JobApplication {
+  id              Int               @id @default(autoincrement())
+  jobId           Int
+  applicantUserId String
+  cvPath          String?
+  status          ApplicationStatus @default(pending)
+  submittedAt     DateTime          @default(now())
+
+  // Relations
+  job             Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  applicant       User              @relation(fields: [applicantUserId], references: [id], onDelete: Cascade)
+
+  @@map("jobApplications")
+}

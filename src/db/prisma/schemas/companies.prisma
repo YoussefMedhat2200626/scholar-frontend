@@ -1,0 +1,19 @@
+model Company {
+  id                  Int                 @id @default(autoincrement())
+  name                String              @unique
+  industry            String?
+  size                String?
+  website             String?
+  linkedin            String?
+  glassdoor           String?
+  headquartersCountry String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  // Relations
+  branches            CompanyBranch[]
+  jobs                Job[]
+  graduationProjects  GraduationProject[]
+
+  @@map("companies")
+}

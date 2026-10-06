@@ -1,0 +1,6 @@
+enum FeedbackCategory {
+  bug
+  feature
+  data
+  other
+}

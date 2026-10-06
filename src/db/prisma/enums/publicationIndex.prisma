@@ -1,0 +1,5 @@
+enum PublicationIndex {
+ SCIE
+ ESCI
+ SSCI
+}

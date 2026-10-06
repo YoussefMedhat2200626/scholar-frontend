@@ -1,0 +1,4 @@
+enum Workflow {
+    standard
+    non_standard   @map("non-standard")
+}

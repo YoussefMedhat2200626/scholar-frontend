@@ -1,0 +1,11 @@
+enum SubBucket {
+    CoreHybridProprietaryEnglish    @map("Core Hybrid Proprietary English")
+    CoreHybridSocietyEnglish        @map("Core Hybrid Society English")
+    CoreGold                        @map("Core Gold")
+    CellPressGold                   @map("Cell Press Gold")
+    CellPressHybridProprietary      @map("Cell Press Hybrid Proprietary")
+    CellPressHybridSociety          @map("Cell Press Hybrid Society")
+    CoreHybridLocalLanguage         @map("Core Hybrid Local Language")
+    TLSubscription                  @map("TL Subscription")
+    TheLancetGold                   @map("The Lancet Gold")
+}

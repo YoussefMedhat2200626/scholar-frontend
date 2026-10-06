@@ -1,0 +1,33 @@
+model Job {
+  id           Int             @id @default(autoincrement())
+  companyId    Int
+  branchId     Int
+  title        String
+  industry     String?
+  domains      Json?
+  type         JobType?
+  seniority    SeniorityLevel?
+  description  String?         @db.Text
+  requirements String?         @db.Text
+  salary       String?
+  applyLink    String?
+  postedAt     DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  
+  // Python Bot Scraper Fields
+  isTaken       Boolean?        @default(false)
+  source        String?         @default("manual")
+  lastCheckedAt DateTime?
+  contentHash   String?
+  originalSource String?
+
+    sendStatus String? @default("pending")
+    numberVisited Int?            @default(0)
+  // Relations
+  company      Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branch       CompanyBranch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  applications JobApplication[]
+
+  @@map("jobs")
+}

@@ -1,0 +1,13 @@
+enum Publisher {
+    IEEE
+    APS
+    RoyalSociety            @map("Royal Society")
+    ACS
+    ACM
+    TaylorAFrancis          @map("Taylor & Francis")
+    Oxford
+    ElSevier
+    Springer
+    Sage
+    MDPI
+}
