@@ -1,0 +1,11 @@
+model TeamMember {
+  id          Int          @id @default(autoincrement())
+  name        String
+  role        String
+  linkedinUrl String?      @map("linkedin_url")
+  team        TeamCategory
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("team_members")
+}

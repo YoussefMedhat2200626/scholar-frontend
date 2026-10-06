@@ -1,0 +1,9 @@
+enum PublicationAccessType {
+    Hybrid
+    Full_Open_Access @map("Full Open Access")
+    Golden_Open_Access @map("Golden Open Access")
+    Diamond_Open_Access @map("Diamond Open Access")
+    Green_Open_Access @map("Green Open Access")
+    Bronze_Open_Access @map("Bronze Open Access")
+    Subscriber_Based_Access @map("Subscriber Based Access")
+}

@@ -1,0 +1,18 @@
+model PublicationEditorialStat {
+  id                          Int           @id @default(autoincrement())
+  publicationId               Int 
+  submissionToFirstDecision   Decimal?      @db.Decimal(10, 2)   
+  submissionToReviewDecision  Decimal?      @db.Decimal(10, 2)   
+  submissionToAcceptance      Decimal?      @db.Decimal(10, 2)   
+  acceptanceToPublication     Decimal?      @db.Decimal(10, 2)   
+  acceptanceRate              Decimal?      @db.Decimal(10, 2)   
+  createdAt                   DateTime      @default(now())
+  updatedAt                   DateTime      @updatedAt
+
+  publication AcademicPublication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+
+  @@index([submissionToFirstDecision(sort: Asc)]) 
+  @@index([submissionToAcceptance(sort: Asc)]) 
+  @@index([acceptanceRate(sort: Desc)]) 
+
+}

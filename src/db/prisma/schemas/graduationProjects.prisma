@@ -1,0 +1,21 @@
+model GraduationProject {
+  id                Int       @id @default(autoincrement())
+  isSponsored       Boolean
+  sponsorCompanyId  Int?
+  university        String?
+  faculty           String?
+  industry          String?
+  domains           Json?
+  supervisor        String?
+  coSupervisor      String?
+  projectTitle      String
+  noOfStudents      Int?
+  documentationLink String?
+  postedAt          DateTime  @default(now())
+
+  // Relations
+  sponsorCompany   Company?  @relation(fields: [sponsorCompanyId], references: [id], onDelete: SetNull)
+  applications     GraduationProjectApplication[]
+
+  @@map("graduationProjects")
+}

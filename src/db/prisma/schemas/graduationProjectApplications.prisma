@@ -1,0 +1,15 @@
+model GraduationProjectApplication {
+  id                 Int               @id @default(autoincrement())
+  projectId          Int
+  applicantUserId    String
+  teamMembers        Json?
+  proposalSummaryUrl String?
+  status             ApplicationStatus @default(pending)
+  submittedAt        DateTime          @default(now())
+
+  // Relations
+  project            GraduationProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  applicant          User              @relation(fields: [applicantUserId], references: [id], onDelete: Cascade)
+
+  @@map("graduationProjectApplications")
+}

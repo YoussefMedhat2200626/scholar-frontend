@@ -1,0 +1,39 @@
+model AcademicPublication {
+  id                 Int                     @id @default(autoincrement())
+  subCategoryId      Int
+  acronym            String?                 @db.VarChar(100)
+  publisher          Publisher
+  publicationType    PublicationType
+  title              String                  
+  issn               String?                 @unique @db.Char(8)
+  eissn              String?                 @unique @db.Char(8)
+  issnCdrom          String?                 @unique @db.Char(8)
+  URL                String?                 @db.VarChar(500)
+  yearLunched        Int?                    
+  openAccessType     PublicationAccessType
+  specificFocusScope String?                 @db.VarChar(500)
+  workflow           Workflow
+  licenseType        LicenseType?
+  journalScope       String?                 @db.Text
+  searchVector  Unsupported("tsvector")? @map("search_vector")
+  imprint            String?                  
+  subBucket          SubBucket?
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+
+
+  // Relations
+  subCategory        PublicationSubCategory  @relation(fields: [subCategoryId], references: [id], onDelete: Cascade)
+  yearlyMetrics      PublicationYearlyMetric[]
+  editorialStats     PublicationEditorialStat[]
+  pricings           PublicationPricing[]
+
+
+  @@index([subCategoryId])
+  @@index([title])
+  @@index([acronym])
+  @@index([openAccessType])
+  @@index([licenseType])
+  @@index([specificFocusScope])
+  @@map("academicPublications")
+}

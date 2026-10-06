@@ -1,0 +1,6 @@
+enum ApplicationStatus {
+  pending
+  reviewed
+  accepted
+  rejected
+}

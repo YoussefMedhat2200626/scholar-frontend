@@ -1,0 +1,22 @@
+model Profile {
+  userId         String      @id 
+  firstName      String  
+  lastName       String  
+  gender         String?
+  country        String?
+  governorate    String?
+  university     String?
+  faculty        String?
+  department     String?
+  graduationYear Int?     
+  linkedinUrl    String?  
+  githubUrl      String?  
+  scholarUrl     String?  
+  skills         Json?
+  experience     Json?
+
+  // Relations
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}

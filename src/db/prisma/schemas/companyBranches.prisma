@@ -1,0 +1,15 @@
+model CompanyBranch {
+  id        Int            @id @default(autoincrement())
+  companyId Int
+  region    String?
+  country   String?
+  state     String?
+  city      String?
+  presence  PresenceStatus?
+
+  // Relations
+  company   Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  jobs      Job[]
+
+  @@map("companyBranches")
+}

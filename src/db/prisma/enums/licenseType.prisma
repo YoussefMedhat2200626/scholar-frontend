@@ -1,0 +1,8 @@
+enum LicenseType {
+    CC
+    CC_BY           @map("CC BY")
+    CC_BY_SA        @map("CC BY-SA")
+    CC_BY_NC        @map("CC BY-NC")
+    CC_BY_ND        @map("CC BY-ND")
+    CC_BY_NC_ND     @map("CC BY-NC-ND")
+}

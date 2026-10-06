@@ -1,0 +1,39 @@
+model ResearchPaper {
+  id               Int             @id @default(autoincrement())
+  
+  // ORCID Identifiers
+  putCode          BigInt?         
+  orcidPath        String?          
+  
+  // Core Info
+  title            String          @db.Text
+  subtitle         String?         @db.Text
+  type             String?         
+  journalTitle     String?         
+  
+  // Identifiers & Links
+  doi              String?         
+  url              String?         
+  
+  // Dates
+  publicationYear  Int?            
+  publicationMonth Int?            
+  publicationDay   Int?            
+  
+  // Source & Metadata
+  sourceName       String?          
+  visibility       String?         @default("public")
+  
+  // Foreign Key
+  staffId          Int            
+  staff            UniversityStaff @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  createdAt        DateTime        @default(now()) 
+  updatedAt        DateTime        @updatedAt
+
+  @@index([staffId])
+  @@index([doi])
+  @@index([putCode])
+
+  @@map("researchPapers")
+}

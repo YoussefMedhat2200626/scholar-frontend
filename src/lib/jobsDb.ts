@@ -32,6 +32,7 @@ const globalForPg = global as unknown as { pgPool?: Pool };
 function getPool(): Pool {
   if (!globalForPg.pgPool) {
     let connectionString = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+    if (!connectionString) throw new Error("Missing DATABASE_URL. Available env vars: " + Object.keys(process.env).filter(k => k.includes("URL") || k.includes("POSTGRES") || k.includes("DATA")).join(", "));
     if (connectionString && connectionString.includes('sslmode=require')) {
       connectionString = connectionString.replace('sslmode=require', 'sslmode=verify-full');
     }
@@ -80,10 +81,22 @@ export async function getJobs(): Promise<JobItem[]> {
 
   const pool = getPool();
   const { rows } = await pool.query(
-    `SELECT * FROM jobs
-     WHERE (is_taken = false OR is_taken IS NULL)
-       AND COALESCE(NULLIF(last_seen_at, ''), NULLIF(first_seen_at, ''))::timestamptz >= $1::timestamptz
-     ORDER BY first_seen_at DESC`,
+    `SELECT 
+       j.id,
+       j.source,
+       j.title,
+       c.name AS company,
+       CONCAT_WS(', ', NULLIF(b.city, ''), NULLIF(b.country, '')) AS location,
+       j."applyLink" AS url,
+       j."isTaken" AS is_taken,
+       j."postedAt"::text AS first_seen_at,
+       j."updatedAt"::text AS last_seen_at
+     FROM jobs j
+     LEFT JOIN companies c ON j."companyId" = c.id
+     LEFT JOIN "companyBranches" b ON j."branchId" = b.id
+     WHERE (j."isTaken" = false OR j."isTaken" IS NULL)
+       AND j."updatedAt" >= $1::timestamptz
+     ORDER BY j."postedAt" DESC`,
     [thirtyDaysAgo]
   );
   return rows as JobItem[];
@@ -114,7 +127,7 @@ export async function markJobAsTaken(id: number | string): Promise<{ success: bo
 
   const pool = getPool();
   await pool.query(
-    `UPDATE jobs SET is_taken = true, last_checked_at = $1 WHERE id = $2`,
+    `UPDATE jobs SET "isTaken" = true, "lastCheckedAt" = $1::timestamptz WHERE id = $2`,
     [now, id]
   );
   return { success: true, message: 'Job marked as taken in database' };
@@ -300,49 +313,49 @@ export async function syncCompanyMonthlyStats(targetMonths?: string[]): Promise<
     `INSERT INTO company_monthly_stats (company_id, year_month, job_count, updated_at)
      SELECT 
        matched.company_id,
-       to_char((NULLIF(j.first_seen_at, '')::timestamptz AT TIME ZONE 'UTC'), 'YYYY-MM') AS year_month,
+       to_char((j."postedAt" AT TIME ZONE 'UTC'), 'YYYY-MM') AS year_month,
        COUNT(DISTINCT j.id)::int AS job_count,
        NOW() AS updated_at
      FROM jobs j
+     LEFT JOIN companies c ON j."companyId" = c.id
      CROSS JOIN LATERAL (
        SELECT CASE
-         WHEN j.company ILIKE '%siemens energy%' THEN 'siemens-energy'
-         WHEN j.company ILIKE '%siemens gamesa%' THEN 'siemens-gamesa'
-         WHEN j.company ILIKE '%siemens digital industries%' 
-           OR j.company ILIKE '%siemens dis%' 
-           OR j.company ILIKE '%siemens eda%' 
-           OR j.company ILIKE '%mentor graphics%' THEN 'siemens-dis'
-         WHEN j.company ILIKE '%siemens%' THEN 'siemens'
-         WHEN j.company ILIKE '%stmicroelectronics%' 
-           OR j.company ILIKE '%stmicro%' 
-           OR j.company ILIKE '%st micro%' THEN 'stmicroelectronics'
-         WHEN j.company ILIKE '%mediatek%' THEN 'mediatek'
-         WHEN j.company ILIKE '%analog devices%' THEN 'analog-devices'
-         WHEN j.company ILIKE '%intel%' 
-           AND j.company NOT ILIKE '%intelligent%' 
-           AND j.company NOT ILIKE '%infineon%' THEN 'intel'
-         WHEN j.company ILIKE '%texas instruments%' THEN 'texas-instruments'
-         WHEN j.company ILIKE '%infineon%' THEN 'infineon'
-         WHEN j.company ILIKE '%capgemini%' THEN 'capgemini'
-         WHEN j.company ILIKE '%cisco%' 
-           AND j.company NOT ILIKE '%san francisco%' THEN 'cisco'
-         WHEN j.company ILIKE '%infinilink%' THEN 'infinilink'
-         WHEN j.company ILIKE '%valeo%' THEN 'valeo'
-         WHEN j.company ILIKE '%dell %' 
-           OR j.company ILIKE '%dell technologies%' 
-           OR j.company ILIKE '%dell inc%' THEN 'dell'
-         WHEN j.company ILIKE '%vodafone%' 
-           OR j.company ILIKE '%vois%' THEN 'vodafone'
-         WHEN j.company ILIKE '%iss international%' THEN 'iss-international'
-         WHEN j.company ILIKE '%mixel%' THEN 'mixel'
+         WHEN c.name ILIKE '%siemens energy%' THEN 'siemens-energy'
+         WHEN c.name ILIKE '%siemens gamesa%' THEN 'siemens-gamesa'
+         WHEN c.name ILIKE '%siemens digital industries%' 
+           OR c.name ILIKE '%siemens dis%' 
+           OR c.name ILIKE '%siemens eda%' 
+           OR c.name ILIKE '%mentor graphics%' THEN 'siemens-dis'
+         WHEN c.name ILIKE '%siemens%' THEN 'siemens'
+         WHEN c.name ILIKE '%stmicroelectronics%' 
+           OR c.name ILIKE '%stmicro%' 
+           OR c.name ILIKE '%st micro%' THEN 'stmicroelectronics'
+         WHEN c.name ILIKE '%mediatek%' THEN 'mediatek'
+         WHEN c.name ILIKE '%analog devices%' THEN 'analog-devices'
+         WHEN c.name ILIKE '%intel%' 
+           AND c.name NOT ILIKE '%intelligent%' 
+           AND c.name NOT ILIKE '%infineon%' THEN 'intel'
+         WHEN c.name ILIKE '%texas instruments%' THEN 'texas-instruments'
+         WHEN c.name ILIKE '%infineon%' THEN 'infineon'
+         WHEN c.name ILIKE '%capgemini%' THEN 'capgemini'
+         WHEN c.name ILIKE '%cisco%' 
+           AND c.name NOT ILIKE '%san francisco%' THEN 'cisco'
+         WHEN c.name ILIKE '%infinilink%' THEN 'infinilink'
+         WHEN c.name ILIKE '%valeo%' THEN 'valeo'
+         WHEN c.name ILIKE '%dell %' 
+           OR c.name ILIKE '%dell technologies%' 
+           OR c.name ILIKE '%dell inc%' THEN 'dell'
+         WHEN c.name ILIKE '%vodafone%' 
+           OR c.name ILIKE '%vois%' THEN 'vodafone'
+         WHEN c.name ILIKE '%iss international%' THEN 'iss-international'
+         WHEN c.name ILIKE '%mixel%' THEN 'mixel'
          ELSE NULL
        END AS company_id
      ) matched
      WHERE matched.company_id IS NOT NULL
-       AND j.first_seen_at IS NOT NULL
-       AND j.first_seen_at != ''
-       AND to_char((NULLIF(j.first_seen_at, '')::timestamptz AT TIME ZONE 'UTC'), 'YYYY-MM') = ANY($1::text[])
-     GROUP BY matched.company_id, to_char((NULLIF(j.first_seen_at, '')::timestamptz AT TIME ZONE 'UTC'), 'YYYY-MM')
+       AND j."postedAt" IS NOT NULL
+       AND to_char((j."postedAt" AT TIME ZONE 'UTC'), 'YYYY-MM') = ANY($1::text[])
+     GROUP BY matched.company_id, to_char((j."postedAt" AT TIME ZONE 'UTC'), 'YYYY-MM')
      ON CONFLICT (company_id, year_month)
      DO UPDATE SET 
        job_count = GREATEST(company_monthly_stats.job_count, EXCLUDED.job_count),
@@ -394,14 +407,8 @@ export async function getCompanyMonthlyStats(): Promise<CompanyMonthlyStat[]> {
   twelveMonthsAgo.setUTCMonth(twelveMonthsAgo.getUTCMonth() - 11);
   const cutoffYm = `${twelveMonthsAgo.getUTCFullYear()}-${String(twelveMonthsAgo.getUTCMonth() + 1).padStart(2, '0')}`;
 
-  // Self-healing: if sync is due, run it
-  try {
-    if (await isSyncDue()) {
-      await syncCompanyMonthlyStats();
-    }
-  } catch (syncErr) {
-    console.warn('Company monthly stats sync check warning:', syncErr);
-  }
+  // Removed inline sync check because it blocks page load and causes Vercel 500 timeout.
+  // We rely on the /api/cron/sync-company-stats cron job instead.
 
   if (isLocalJsonMode) {
     const statsPath = getStatsJsonDbPath();

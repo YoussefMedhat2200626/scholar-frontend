@@ -1,0 +1,16 @@
+model University {
+  id            Int      @id @default(autoincrement())
+  name          String   @unique
+  shortName     String?  @unique
+  website       String?
+  country       String?
+  city          String?
+  staff         UniversityStaff[]
+  faculties     Faculty[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([name])
+  @@map("universities")
+}

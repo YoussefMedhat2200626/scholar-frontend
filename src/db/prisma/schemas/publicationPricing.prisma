@@ -1,0 +1,15 @@
+model PublicationPricing {
+  id                Int         @id @default(autoincrement())
+  publicationId     Int         
+  pricingYear       Int         
+  currency          String      @db.VarChar(3)
+  cost              Decimal     @db.Decimal(10, 2)
+  isSubscription    Boolean?    @default(false)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  publication AcademicPublication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+
+  @@unique([publicationId, pricingYear, currency])
+  @@index([currency,cost])
+}

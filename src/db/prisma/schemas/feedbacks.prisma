@@ -1,0 +1,15 @@
+model Feedback {
+  id          Int              @id @default(autoincrement())
+  userId      String?             
+  firstName   String?          
+  lastName    String?          
+  email       String?
+  category    FeedbackCategory?
+  message     String           @db.Text
+  submittedAt DateTime         @default(now()) 
+
+  // Relations
+  user        User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("feedbacks")
+}
